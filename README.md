@@ -100,6 +100,7 @@ A critical question for any numerical model is: *How do we know discrete integer
 
 | File | Purpose |
 | :--- | :--- |
+| `router_4d.py` | **Phase 8** Space-Time Pathfinding algorithm. Extrapolates throttle decisions to intercept transient updrafts. |
 | `cuda_megacity_engine.cu` | **Phase 7** Parallel RTX Kernel. Dispatches 1,000,000 threads simultaneously. |
 | `cuda_ruthless_stress.cu` | **Phase 7** Destruction bounds. 50 Billion collisions using Anti-matter. |
 | `server.py` | **Production Edge API.** FastAPI Web Server for Drone logistics querying. |
@@ -125,7 +126,7 @@ A critical question for any numerical model is: *How do we know discrete integer
 - [x] **Phase 5:** Phenomenological Visualizer *(Replaced by 4D Synch)*
 - [x] **Phase 6:** FastAPI web server (GPS to JSON wind vectors)
 - [x] **Phase 7:** CUDA kernel port (Massive GPU Megacity Scaling)
-- [ ] **Phase 8:** 4D A* Pathfinding Router (Synchronizing Z-Axis glides with frame-predictions)
+- [x] **Phase 8:** 4D A* Pathfinding Router (Synchronizing Z-Axis glides with frame-predictions)
 
 ---
 
