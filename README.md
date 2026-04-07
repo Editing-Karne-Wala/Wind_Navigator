@@ -100,7 +100,8 @@ A critical question for any numerical model is: *How do we know discrete integer
 
 | File | Purpose |
 | :--- | :--- |
-| `router_4d.py` | **Phase 8** Space-Time Pathfinding algorithm. Extrapolates throttle decisions to intercept transient updrafts. |
+| `router_4d.py` | **Phase 8** Space-Time Pathfinding algorithm (Python Server). Extrapolates throttle decisions to intercept transient updrafts via Atomic UTC time. |
+| `router_4d.cpp` | **Phase 8** Space-Time Pathfinding algorithm (C++ IoT Target). Memory-efficient A* optimized for onboard drone chips like PX4 / ArduPilot. |
 | `cuda_megacity_engine.cu` | **Phase 7** Parallel RTX Kernel. Dispatches 1,000,000 threads simultaneously. |
 | `cuda_ruthless_stress.cu` | **Phase 7** Destruction bounds. 50 Billion collisions using Anti-matter. |
 | `server.py` | **Production Edge API.** FastAPI Web Server for Drone logistics querying. |
