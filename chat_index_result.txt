@@ -1,0 +1,13 @@
+﻿Value length: 26 chars
+Value type: <class 'str'>
+Full value written to chat_index.json
+
+Parsed JSON type: <class 'dict'>
+Keys: ['version', 'entries']
+*** TARGET NOT IN DATA ***
+
+  Key: version
+  Value: 1
+
+  Key: entries
+  Value: {}
