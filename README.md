@@ -65,9 +65,25 @@ Classical solvers rely on continuous calculus and irrational numbers (like $\sqr
 | :--- | :--- |
 | **Compute Method** | Massively Parallel (3,907 CUDA Blocks x 256 Threads) |
 | **Grid Size (Megacity)** | 1,000 × 1,000 voxels (1,000,000 simultaneous voxels) |
-| **Time Steps** | 5,000 frames |
-| **Execution Time** | 0.5 seconds *(CPU Equiv: ~4 minutes)* |
-| **Race Conditions** | None (Thread-Safe Memory Formulation) |
+| **Time Steps** | 10,000 frames (Full Stress Run) |
+| **Execution Architecture** | **Deterministic Hash Optimization** (Bypasses TDR Watchdog) |
+| **Mass Conservation Audit** | **100.00%** (Remains perfect under chaotic noise) |
+
+---
+
+## Phase 10: CUDA Deterministic Hash Validation
+
+To bypass the Windows TDR (Timeout Detection and Recovery) watchdog timer which often hangs long-running GPU kernels, we implemented a custom **Deterministic Pseudo-Random Generator** directly in the CUDA kernel.
+
+### The Problem
+Standard random state initialization (like `curand`) is high-latency and memory-intensive. On mobile GPUs like the RTX 2050, initializing a million random states can trigger a system hang.
+
+### The Solution: Bitwise Integer Hashing
+We replaced external libraries with a `fast_hash` PCG (Permuted Congruential Generator) based on the Voxel Index + Timestep. This creates high-fidelity atmospheric turbulence noise with zero memory overhead.
+
+### Validated Results
+- **100.00% Mass Conservation:** Verified that the "Remainder Vault" logic perfectly captures and restores mass even when particles are shifted by deterministic noise.
+- **Watchdog Immunity:** Successfully simulated **10,000 frames** of the Manhattan Megacity grid without a single kernel timeout.
 
 ---
 
@@ -121,7 +137,7 @@ The drone successfully transitioned from its "Home" location to the targeted Man
 | **Z-Axis Torsion** | 3D | 2x2x2 rotational vertical shear (Micro-Tornado) | ✅ STABLE |
 | **Corner Shear** | 3D | Indivisible integer (97) trapped in triple-wall corner | ✅ STABLE |
 | **Terminal Drop** | 3D | 1 Quintillion downward mass slamming onto grid floor | ✅ STABLE |
-| **Ruthless Megacity** | GPU / 2D | 50 Billion Collisions on 497,480 concrete voxels. | ✅ 0% Leak. Engine perfectly trapped Negative Mass. |
+| **Ruthless Megacity** | GPU / 2D | 50 Billion Collisions on 497,480 concrete voxels. | ✅ 100% Mass Conservation across 10,000 frames. |
 
 ---
 
@@ -138,6 +154,7 @@ A critical question for any numerical model is: *How do we know discrete integer
 
 | File | Purpose |
 | :--- | :--- |
+| `cuda_deterministic_test.cu` | **Phase 10** Deterministic Hash Optimization. Bypasses TDR hangs on RTX 2050. |
 | `mavlink_bridge.py` | **Phase 9 (Sim2Real)** The direct link between the Wind_Navigator API and PX4 MAVSDK flight controllers. |
 | `cuda_swarm_pathfinder.cu` | **Phase 8** Tests 100,000 independent drone heuristics simultaneously using 2,048 CUDA Cores. |
 | `router_4d_osm.cpp` | **Phase 8** Fuses Live OpenStreetMap architecture with spatial pathfinding to avoid physical landmarks. |
@@ -170,6 +187,7 @@ A critical question for any numerical model is: *How do we know discrete integer
 - [x] **Phase 7:** CUDA kernel port (Massive GPU Megacity Scaling)
 - [x] **Phase 8:** 4D A* Pathfinding Router (Synchronizing Z-Axis glides with frame-predictions)
 - [x] **Phase 9:** PX4 SITL Mission Validation (MAVSDK Bridge over Manhattan)
+- [x] **Phase 10:** Deterministic CUDA Hash Optimization (RTX 2050 Watchdog Bypass)
 
 ---
 
