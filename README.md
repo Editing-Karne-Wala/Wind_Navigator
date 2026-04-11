@@ -347,6 +347,33 @@ One axis stretching + one axis compressing = topological saddle point = bifurcat
 
 ---
 
+## Phase 16: The Destruction Suite — Ruthless Combined Stress Tests
+
+All five Phase 12–15 subsystems tested simultaneously under extreme conditions. File: `stress_suite_phase16.cpp`.
+
+### Critical Rational Trigonometry Correction
+During development, calculus notation (`dvx_dx`, `dvy_dy`) was identified and eliminated. The correct rational integer terminology is:
+- `spread_x = vx[East] - vx[West]` — integer subtraction, no limits
+- `spread_y = vy[North] - vy[South]` — integer subtraction, no limits
+- Saddle condition: `spread_x * spread_y < 0` — integer product sign check
+
+No calculus. No derivatives. No limits. Pure rational arithmetic.
+
+### Test Results (`stress_suite_phase16.cpp`)
+
+| Test | What It Does | Result |
+| :--- | :--- | :--- |
+| **Butterfly Bomb** | +1 unit perturbation in 500×500 grid, 1000 frames | ✅ PASS — Chaos bounded, both vaults unbroken |
+| **Attractor Prison** | Drone locked in period-16 cycle, must phase-escape | ✅ PASS — Escaped using `wait = (weak_phase - entry + period) % period` |
+| **Double Hurricane** | Two mass zones converging from opposite corners | ✅ PASS — No integer overflow, system stable throughout |
+| **Bifurcation Cascade** | Every interior voxel at a saddle point simultaneously | ✅ PASS — Near-100% detection, mass drift = 0 |
+| **1000 Realities** | Monte Carlo: 1000 sims with random ±1 seeds | ✅ PASS — **1000/1000 realities** converged on same dominant route |
+
+**OVERALL: `[PASS] ALL DESTRUCTION TESTS SURVIVED. The engine is INDESTRUCTIBLE.`**
+
+---
+
 ## License
+
 
 MIT License. See `LICENSE` for details.
