@@ -7,6 +7,7 @@ package-lock.json
 
 # Gradle / Android / Java
 .gradle/
+.gradle/buildOutputCleanup/cache.properties
 build/
 **/build/
 *.class
