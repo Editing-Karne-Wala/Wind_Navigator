@@ -258,6 +258,52 @@ Three fixes were applied to `router_4d_attractor_v2.cpp` to upgrade from 4/5 to 
 
 ---
 
+## Phase 15: Bifurcation Zone Detection + Confidence-Scored API
+
+### The Safety Wall
+
+**The Rational Rule:** No continuous gradient (irrational). Uses the **Integer Divergence Criterion**:
+
+```
+dvx_dx = vx[East] - vx[West]        (integer subtraction)
+dvy_dy = vy[North] - vy[South]      (integer subtraction)
+BIFURCATION iff  dvx_dx * dvy_dy < 0
+```
+
+One axis stretching + one axis compressing = topological saddle point = bifurcation zone. The integer product check replaces all irrational continuous analysis.
+
+### Validation (`bifurcation_detector.cpp`)
+
+10 saddle-point velocity fields were directly injected into a 150×150 grid. 10 non-saddle control fields were also injected to validate zero false positives.
+
+| Audit | Result |
+| :--- | :--- |
+| **Saddles Detected** | 10 / 10 ✅ |
+| **False Positives** | 0 ✅ |
+| **Irrational Ops** | Zero |
+
+### Confidence-Scored API (`server.py`)
+
+`server.py` updated. The `/route` endpoint now returns:
+
+```json
+{
+  "drone_id": "DELTA-7",
+  "status": "SAFE",
+  "wind_vector": {"vx": 3, "vy": -1, "vz": 0},
+  "chaos_score": 10,
+  "confidence": "MEDIUM"
+}
+```
+
+| `chaos_score` | `confidence` | Meaning |
+| :--- | :--- | :--- |
+| `0` | `HIGH` | No bifurcation zones near path |
+| `1–3` | `MEDIUM` | Proceed with caution |
+| `4+` | `LOW` | High turbulence — consider re-routing |
+
+---
+
 ## Stress Test Results
 
 | Test | Dimension | Scenario | Result |
