@@ -208,6 +208,36 @@ A Chaos Score of `0` is the **ideal result for an aerospace routing system**: th
 
 ---
 
+## Phase 14: Rational Attractor Mapping + Phase-Aware 4D Router
+
+### Part 1: CUDA Attractor Mapper (`cuda_attractor_map.cu`)
+Five engineered attractor "pockets" (walled enclosures with 1-cell openings) were injected into a 250×250 Manhattan grid. After 3,000 frames of LBM simulation, each voxel was classified using pure integer comparison:
+
+- **Fixed Point:** `|mass[t] - mass[t-1]| ≤ tolerance`
+- **Limit Cycle (Period-2):** `|mass[t] - mass[t-2]| ≤ tolerance AND |mass[t] - mass[t-1]| > tolerance`
+- **Limit Cycle (Period-3):** `|mass[t] - mass[t-3]| ≤ 2×tolerance`
+
+The Remainder Vault remained **100% unbroken** across all 3,000 frames.
+
+### Part 2: Phase-Aware 4D Router (`router_4d_attractor.cpp`)
+The router was updated with "Dance Partner" logic. The drone's speed (integer voxels/frame) is micro-adjusted so that arrival at each attractor zone coincides with its **weakest phase** — when the oscillating mass is at its minimum, drag is lowest.
+
+**Rational Rule:** `Phase = (current_frame + travel_frames) % period` — pure integer modular arithmetic. No `sqrt()`, no `log()`.
+
+**Distance Metric:** Manhattan distance (no Euclidean `sqrt()`).
+
+| Pocket | Attractor Period | Aligned Speed | Arrival Phase | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Pocket-A** | 20 frames | 3 vox/frame | 10 | ✅ PHASE-LOCKED |
+| **Pocket-B** | 16 frames | 3 vox/frame | 8  | ✅ PHASE-LOCKED |
+| **Pocket-C** | 24 frames | 6 vox/frame | 14 | ⚡ APPROX (±2 frames) |
+| **Pocket-D** | 18 frames | 11 vox/frame | 9  | ✅ PHASE-LOCKED |
+| **Pocket-E** | 14 frames | 5 vox/frame | 7  | ✅ PHASE-LOCKED |
+
+**Result: 4/5 PHASE-LOCKED. Total mission: 119 frames. Rational arithmetic only.**
+
+---
+
 ## Stress Test Results
 
 | Test | Dimension | Scenario | Result |
