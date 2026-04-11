@@ -238,6 +238,26 @@ The router was updated with "Dance Partner" logic. The drone's speed (integer vo
 
 ---
 
+## Phase 14 v2: Router Upgrade — 5/5 Phase-Lock Achieved
+
+Three fixes were applied to `router_4d_attractor_v2.cpp` to upgrade from 4/5 to 5/5 PHASE-LOCKED:
+
+- **Fix 1 — Rational Sub-Voxel Speeds:** Speed expressed as `p/q` (both integers). Search over `p ∈ [1..20], q ∈ [1..4]`. Purely integer arithmetic — no floats used.
+- **Fix 2 — Phase Parking:** If Fix 1 cannot find exact alignment, compute minimum integer wait frames: `wait = (weak_phase - arrival_phase + period) % period`. Drone hovers at approach zone.
+- **Fix 3 — Phase-First Backward Planning:** Required departure frame computed before speed search, ensuring the router respects phase constraints from the start.
+
+| Pocket | Speed Used | Travel | Wait | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Pocket-A** | 1/1 vox/frame | 90f | 0f | ✅ PHASE-LOCKED |
+| **Pocket-B** | 8/3 vox/frame | 30f | 0f | ✅ PHASE-LOCKED |
+| **Pocket-C** | 1/1 vox/frame | 180f | 0f | ✅ PHASE-LOCKED (was APPROX) |
+| **Pocket-D** | 10/1 vox/frame | 15f | 0f | ✅ PHASE-LOCKED |
+| **Pocket-E** | 20/3 + Wait | 15f | 13f | ✅ PHASE-LOCKED+W |
+
+**Result: 5/5 PHASE-LOCKED. Rational arithmetic only. No sqrt, no log, no float.**
+
+---
+
 ## Stress Test Results
 
 | Test | Dimension | Scenario | Result |
