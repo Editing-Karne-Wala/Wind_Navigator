@@ -377,3 +377,42 @@ No calculus. No derivatives. No limits. Pure rational arithmetic.
 
 
 MIT License. See `LICENSE` for details.
+
+
+---
+
+## Phase 23 -- Real Hardware Bridge (MAVLink + SITL)
+
+**Status: COMPLETE - 3/3 SITL Tests Passed**
+
+### What was built
+- mavlink_bridge.py: Production MAVLink bridge reading sim predictions at 5Hz
+- sitl_bridge_test.py: Full SITL integration test (ArduCopter v3.3)
+- phase23_sitl_log.json: Machine-readable test evidence
+
+### SITL Results
+| Test | Result | Detail |
+|:---|:---:|:---|
+| Vortex detection (chaos=38) | PASS | danger=38.0, HOLD sent @WP17 (12s ahead) |
+| Clear path (chaos=2) | PASS | danger=0.2, PROCEED sent |
+| Threshold boundary (chaos=20) | PASS | alert triggered at exactly threshold |
+
+### Validated Loop
+`
+Panda3D sim vortex prediction (12s lookahead)
+  -> predict_vortex_ahead()
+  -> MAVLink STATUSTEXT + MAV_CMD_CONDITION_DELAY
+  -> ArduCopter SITL (tcp:127.0.0.1:5760)
+`
+
+### Bugs fixed during Phase 23
+1. DroneKit breaks on Python 3.12 (collections.MutableMapping removed) -- replaced with raw pymavlink
+2. Unicode box-drawing chars (U+2500) crash Windows cp1252 stdout -- replaced with ASCII dashes
+
+### To run against real hardware
+`bash
+python mavlink_bridge.py --connect COM5 --baud 57600   # USB telemetry radio
+python mavlink_bridge.py --connect udp:192.168.1.x:14550  # UDP / Mission Planner
+`
+
+See PHASE_23_OBSERVATIONS.md for full timing analysis and connection guide.
