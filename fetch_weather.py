@@ -1,39 +1,72 @@
-import urllib.request
-import json
-import math
+# -*- coding: utf-8 -*-
+"""
+WIND_NAVIGATOR — Real Weather Bridge
+Fetches live Manhattan wind data from Open-Meteo (NOAA GFS model, free, no API key)
+and converts into LBM boundary condition vectors (u, v, w).
+"""
+import math, time, json
 
-# Fetch real-time weather data for Manhattan, NY from Open-Meteo (No API key needed)
-url = "https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&current_weather=true"
+try:
+    import httpx
+    def _get(url): return httpx.get(url, timeout=6.0).json()
+except ImportError:
+    import urllib.request as _ur
+    def _get(url):
+        with _ur.urlopen(url, timeout=6) as r:
+            return json.loads(r.read())
 
-print("Fetching REAL-TIME wind data for Manhattan, NY (Lat: 40.7128, Lon: -74.0060)...")
+LAT, LON = 40.758, -73.985          # Midtown Manhattan
+OPEN_METEO = (
+    "https://api.open-meteo.com/v1/forecast"
+    "?latitude={lat}&longitude={lon}"
+    "&current=wind_speed_10m,wind_direction_10m,wind_gusts_10m"
+    "&wind_speed_unit=mph"
+)
+CACHE_TTL = 3600   # 1 hour
 
-req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-with urllib.request.urlopen(req) as response:
-    data = json.loads(response.read().decode())
+_cache   = {}
+_cache_t = 0.0
 
-current = data['current_weather']
-wind_speed_kmh = current['windspeed']
-wind_direction_deg = current['winddirection']
+def fetch_weather(force: bool = False) -> dict:
+    """
+    Returns a dict with:
+      speed_mph, direction_deg, gusts_mph,
+      wind_u, wind_v, wind_w  (LBM-ready fps-equivalent vectors),
+      source, timestamp, location
+    """
+    global _cache, _cache_t
+    if not force and time.time() - _cache_t < CACHE_TTL and _cache:
+        return _cache
 
-print(f"Current Real Wind: {wind_speed_kmh} km/h at {wind_direction_deg} degrees.")
+    url = OPEN_METEO.format(lat=LAT, lon=LON)
+    try:
+        data  = _get(url)
+        cur   = data["current"]
+        spd   = float(cur["wind_speed_10m"])
+        dirg  = float(cur["wind_direction_10m"])
+        gust  = float(cur["wind_gusts_10m"])
+        rad   = math.radians(dirg)
+        _cache = {
+            "speed_mph":    round(spd,  1),
+            "direction_deg":round(dirg, 1),
+            "gusts_mph":    round(gust, 1),
+            "wind_u": round(-spd * math.sin(rad), 2),   # W-E  (fps scale)
+            "wind_v": round(-spd * math.cos(rad), 2),   # S-N
+            "wind_w": 0.0,                               # vertical (injected by LBM)
+            "source":    "Open-Meteo (NOAA GFS Model)",
+            "timestamp": cur.get("time", "unknown"),
+            "location":  "Manhattan, NYC",
+        }
+        _cache_t = time.time()
+    except Exception as e:
+        _cache = {
+            "speed_mph": 8.0, "direction_deg": 270.0, "gusts_mph": 14.0,
+            "wind_u": 8.0, "wind_v": 0.0, "wind_w": 0.0,
+            "source": f"Fallback (offline: {e})",
+            "timestamp": "unavailable", "location": "Manhattan, NYC",
+        }
+    return _cache
 
-# Convert to standard vectors (m/s)
-wind_speed_ms = wind_speed_kmh * (1000.0 / 3600.0)
-
-# We use classical trig down here ONLY to parse the real-world data into our discrete format.
-# Once it goes into the simulation, it remains pure integer.
-rad = math.radians(270 - wind_direction_deg) # Meteorological to Math angle
-vx = wind_speed_ms * math.cos(rad)
-vy = wind_speed_ms * math.sin(rad)
-
-# Scale up for our Integer "Max Planck" grid (Scale factor 1000)
-vx_int = int(vx * 1000)
-vy_int = int(vy * 1000)
-
-print(f"Discrete Vector Input Generated -> Vx: {vx_int}, Vy: {vy_int}")
-
-# We will generate a configuration file for the C++ engine
-with open("real_wind_input.txt", "w") as f:
-    f.write(f"{vx_int} {vy_int}\n")
-
-print("Saved absolute integer weather parameters to real_wind_input.txt")
+if __name__ == "__main__":
+    w = fetch_weather(force=True)
+    print(json.dumps(w, indent=2))

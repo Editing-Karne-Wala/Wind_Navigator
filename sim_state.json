@@ -1,0 +1,1 @@
+{"drone_pos": [37.0, 36.25], "altitude_m": 209.3, "chaos": 2, "confidence": "HIGH", "roll_deg": 0.0, "pitch_deg": -0.0, "wind_u": 1.5, "wind_v": 0.8, "wind_w": 0.2, "waypoint": 108, "total_waypoints": 109, "motor_0_health": 85, "sim_time": 149.4, "profit_usd": 10.8, "crashed": false, "crash_reason": "", "payload_kg": 10.0, "max_thrust_n": 130.0, "weight_n": 122.6}

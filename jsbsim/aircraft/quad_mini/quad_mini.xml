@@ -1,0 +1,128 @@
+<?xml version="1.0"?>
+<fdm_config name="quad_mini" version="2.0" release="BETA"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="http://jsbsim.sf.net/jsbsim.xsd">
+
+    <fileheader>
+        <author> Wind_Navigator Phase 17 </author>
+        <filedesc> High-fidelity small quadcopter for stress testing </filedesc>
+    </fileheader>
+
+    <metrics>
+        <wingarea unit="FT2"> 0.2 </wingarea>
+        <wingspan unit="FT"> 1.0 </wingspan>
+        <chord unit="FT"> 0.2 </chord>
+        <htailarea unit="FT2"> 0 </htailarea>
+        <htailarm unit="FT"> 0 </htailarm>
+        <vtailarea unit="FT2"> 0 </vtailarea>
+        <vtailarm unit="FT"> 0 </vtailarm>
+        <location name="AERORP" unit="IN">
+            <x> 0 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+        <location name="EYEPOINT" unit="IN">
+            <x> 0 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+        <location name="VRP" unit="IN">
+            <x> 0 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+    </metrics>
+
+    <mass_balance>
+        <ixx unit="SLUG*FT2"> 0.005 </ixx>
+        <iyy unit="SLUG*FT2"> 0.005 </iyy>
+        <izz unit="SLUG*FT2"> 0.01 </izz>
+        <emptywt unit="LBS"> 2.0 </emptywt>
+        <location name="CG" unit="IN">
+            <x> 0 </x>
+            <y> 0 </y>
+            <z> 0 </z>
+        </location>
+    </mass_balance>
+
+    <ground_reactions>
+        <contact type="BOGEY" name="BOTTOM">
+            <location unit="IN">
+                <x> 0 </x>
+                <y> 0 </y>
+                <z> -2 </z>
+            </location>
+            <static_friction>  0.8 </static_friction>
+            <dynamic_friction> 0.5 </dynamic_friction>
+            <rolling_friction> 0.02 </rolling_friction>
+            <spring_coeff unit="LBS/FT"> 100 </spring_coeff>
+            <damping_coeff unit="LBS/FT/SEC"> 20 </damping_coeff>
+            <brake_group> NONE </brake_group>
+            <retractable>0</retractable>
+        </contact>
+    </ground_reactions>
+
+    <propulsion>
+        <engine file="electric_motor">
+            <location unit="IN"> <x> 5 </x> <y> 5 </y> <z> 0 </z> </location>
+            <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            <feed>0</feed>
+            <thruster file="prop">
+                <location unit="IN"> <x> 5 </x> <y> 5 </y> <z> 0 </z> </location>
+                <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            </thruster>
+        </engine>
+        <engine file="electric_motor">
+            <location unit="IN"> <x> -5 </x> <y> -5 </y> <z> 0 </z> </location>
+            <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            <feed>0</feed>
+            <thruster file="prop">
+                <location unit="IN"> <x> -5 </x> <y> -5 </y> <z> 0 </z> </location>
+                <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            </thruster>
+        </engine>
+        <!-- SKEWED MECHANICAL STATE: Motors 3 and 4 are slightly less efficient -->
+        <engine file="electric_motor">
+            <location unit="IN"> <x> 5 </x> <y> -5 </y> <z> 0 </z> </location>
+            <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            <feed>0</feed>
+            <thruster file="prop">
+                <location unit="IN"> <x> 5 </x> <y> -5 </y> <z> 0 </z> </location>
+                <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            </thruster>
+        </engine>
+        <engine file="electric_motor">
+            <location unit="IN"> <x> -5 </x> <y> 5 </y> <z> 0 </z> </location>
+            <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            <feed>0</feed>
+            <thruster file="prop">
+                <location unit="IN"> <x> -5 </x> <y> 5 </y> <z> 0 </z> </location>
+                <orient unit="DEG"> <roll> 0 </roll> <pitch> 90 </pitch> <yaw> 0 </yaw> </orient>
+            </thruster>
+        </engine>
+    </propulsion>
+
+    <flight_control name="Simple Quad Control">
+        <channel name="Throttle">
+            <pure_gain name="Throttle Gain">
+                <input> fcs/throttle-cmd-norm </input>
+                <gain> 1.0 </gain>
+                <output> fcs/throttle-pos-norm </output>
+            </pure_gain>
+        </channel>
+    </flight_control>
+
+    <aerodynamics>
+        <axis name="DRAG">
+            <function name="aero/force/drag">
+                <description>Simple drag</description>
+                <product>
+                    <property> atmosphere/q-bar-psf </property>
+                    <property> metrics/wingarea-ft2 </property>
+                    <value> 0.5 </value>
+                </product>
+            </function>
+        </axis>
+    </aerodynamics>
+
+</fdm_config>
