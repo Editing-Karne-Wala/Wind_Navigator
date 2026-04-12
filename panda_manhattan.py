@@ -13,6 +13,7 @@ Route deviation is tracked, logged, and shown on the dashboard.
 import sys, os, math, heapq, json, random
 from pid_controller import PID
 from rational_wind import rational_wind_components, load_noaa_wind, lbm_bifurcation_score
+from turbulence_metrics import TurbulenceMonitor, TI_LIGHT, TI_MODERATE, ti_to_label
 os.environ['PYTHONUTF8'] = '1'
 
 from panda3d.core import (
@@ -262,7 +263,8 @@ class ManhattanSim(ShowBase):
         self.frame_n     = 0
         self.trail_pts   = []
         self.confidence  = "HIGH"
-        self.chaos       = 2
+        self.chaos       = 0.0        # Phase 24: TI% (was hardcoded 38/2)
+        self._ti_mon     = TurbulenceMonitor(window_size=30)  # 6s at 5Hz
         self.wind_u      = 0.0
         self.wind_v      = 0.0
         self.wind_w      = 0.0
@@ -510,7 +512,7 @@ class ManhattanSim(ShowBase):
         self.crash_altitude = self.fdm['position/h-agl-ft'] * 0.3048
         self.crash_waypoint = self.wp_idx
         self.confidence     = "CRASH"
-        self.chaos          = 99
+        self.chaos          = 99.0   # sentinel: TI=99% signals crash state
         for i in range(4):          # kill motors
             try: self.fdm[f'fcs/throttle-cmd-norm[{i}]'] = 0.0
             except: pass
@@ -584,8 +586,9 @@ class ManhattanSim(ShowBase):
 
             in_bif = (TERRAIN[gy][gx+1] - TERRAIN[gy][gx-1]) * \
                      (TERRAIN[gy+1][gx] - TERRAIN[gy-1][gx]) < 0
-            self.chaos      = 38 if in_bif else 2
-            self.confidence = "LOW" if in_bif else "HIGH"
+            # Phase 24: compute TI from rolling wind window (replaces chaos=38/2)
+            self.chaos      = self._ti_mon.update(self.wind_u, self.wind_v, self.wind_w)
+            self.confidence = self._ti_mon.confidence()
 
             # ── PHASE 21: Rational Wind (no sin/cos) ─────────────────────────
             # Global wind: NOAA rational integer components (fps)
@@ -836,8 +839,10 @@ class ManhattanSim(ShowBase):
         state = {
             "drone_pos":       [round(wx, 2), round(wy, 2)],
             "altitude_m":      round(self.fdm['position/h-agl-ft'] * 0.3048, 1),
-            "chaos":           self.chaos,
+            "chaos":           self.chaos,          # TI% (Phase 24)
+            "chaos_label":     ti_to_label(self.chaos if self.chaos < 90 else 40.0),
             "confidence":      self.confidence,
+            "turbulence":      self._ti_mon.state_dict(),
             "roll_deg":        round(phi * 5, 1),
             "pitch_deg":       round(theta * 5, 1),
             "wind_u":          round(self.wind_u, 1),

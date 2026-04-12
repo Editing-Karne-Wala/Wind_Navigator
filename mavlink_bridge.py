@@ -44,7 +44,9 @@ except ImportError:
 
 LOOKAHEAD_S      = 12.0   # seconds ahead to predict (12s at 5m/s = 60m lookahead)
 POLL_HZ          = 5      # how often to read sim_state.json
-VORTEX_THRESHOLD = 20     # chaos score >= this triggers a HOLD command
+VORTEX_THRESHOLD = 15.0  # TI% >= 15% = FAA moderate turbulence HOLD criterion
+                          # Source: FAA AC 00-30C / ICAO Doc 9817 / EASA PDRA-G02
+                          # (was: 20, arbitrary integer -- Phase 24 fix)
 STATE_FILE       = 'sim_state.json'
 HW_STATE_FILE    = 'hardware_state.json'
 
@@ -62,19 +64,16 @@ def predict_vortex_ahead(sim_state: dict, lookahead_s: float) -> dict:
         did      = drone['id']
         wp_now   = drone.get('waypoint', 0)
         wp_total = drone.get('total_waypoints', 1)
-        chaos    = drone.get('chaos', 2)
+        chaos    = drone.get('chaos', 0.0)    # Phase 24: now TI%
         conf     = drone.get('confidence', 'HIGH')
-        speed_f  = drone.get('speed_factor', 1.0)
 
-        # Estimate waypoints per second from speed_factor and payload
-        pl_kg    = drone.get('payload_kg', 1.0)
+        # Estimate waypoints per second
         wps_sec  = max(0.1, 1.5 / (1.0 + pl_kg * 0.04)) * speed_f
         wp_ahead = int(wp_now + lookahead_s * wps_sec)
         wp_ahead = min(wp_ahead, wp_total - 1)
 
-        # Danger score: chaos * (1 if in bifurcation else 0.1)
-        bif_factor = 1.0 if conf == 'LOW' else 0.1
-        danger     = chaos * bif_factor
+        # Danger score IS the TI% -- no multiplier needed (TI already meaningful)
+        danger = chaos
 
         predictions[did] = {
             'drone_id':       did,

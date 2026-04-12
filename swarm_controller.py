@@ -19,6 +19,7 @@ trailing drone reduces speed by 50% until separation recovers.
 import math
 from pid_controller import PID
 from rational_wind  import rational_wind_components, lbm_bifurcation_score
+from turbulence_metrics import TurbulenceMonitor, ti_to_label, TI_LIGHT
 
 MIN_SEPARATION = 1.8   # scene units (~18m real-world separation)
 
@@ -88,7 +89,8 @@ class DroneAgent:
         self.crash_reason     = ""
         self.mission_complete = False
         self.confidence       = "HIGH"
-        self.chaos            = 2
+        self.chaos            = 0.0       # Phase 24: TI% (was hardcoded 38/2)
+        self._ti_mon          = TurbulenceMonitor(window_size=30)
         self.speed_factor     = 1.0   # reduced during collision avoidance
 
         # Telemetry
@@ -123,8 +125,6 @@ class DroneAgent:
         # Bifurcation check (integer LBM)
         cross, quad = lbm_bifurcation_score(terrain, gx, gy, W, H)
         in_bif = cross < 0
-        self.chaos      = 38 if in_bif else 2
-        self.confidence = "LOW" if in_bif else "HIGH"
 
         # Rational wind (integer Chebyshev recurrence for turbulence)
         if in_bif:
@@ -140,6 +140,10 @@ class DroneAgent:
             self.wind_u = float(noaa_u)
             self.wind_v = float(noaa_v)
             self.wind_w = 0.2
+
+        # Phase 24: compute TI from rolling wind window (replaces chaos=38/2)
+        self.chaos      = self._ti_mon.update(self.wind_u, self.wind_v, self.wind_w)
+        self.confidence = self._ti_mon.confidence()
 
         # Flight envelope
         wind_load = abs(self.wind_w) * 0.20
@@ -206,7 +210,8 @@ class DroneAgent:
             "total_waypoints": len(self.route),
             "altitude_m":      round(self.altitude_m, 1),
             "confidence":      self.confidence,
-            "chaos":           self.chaos,
+            "chaos":           round(self.chaos, 2),    # TI% (Phase 24)
+            "chaos_label":     ti_to_label(self.chaos if self.chaos < 90 else 40.0),
             "wind_u":          round(self.wind_u, 1),
             "wind_v":          round(self.wind_v, 1),
             "wind_w":          round(self.wind_w, 1),
@@ -215,6 +220,7 @@ class DroneAgent:
             "mission_complete": self.mission_complete,
             "max_deviation_su": round(self.max_deviation, 3),
             "speed_factor":    round(self.speed_factor, 2),
+            "turbulence":      self._ti_mon.state_dict(),
         }
 
 
