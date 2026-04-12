@@ -153,21 +153,18 @@ def smooth_path(path, window=4):
         smoothed.append((sum(xs)/len(xs), sum(ys)/len(ys)))
     return smoothed
 
-def build_route():
-    print("[*] Running A* through Manhattan streets (NW corner -> SE corner)...")
-    raw = astar((4, 4), (75, 75), payload_kg=PAYLOAD_KG)
-    print(f"[*] Payload={PAYLOAD_KG}kg — A* using canyon-width bias for heavy routing.")
-    print(f"[*] A* found {len(raw)} raw waypoints.")
+def build_route(terrain=None, start=(4,4), end=(74,74), payload_kg=None):
+    """Generate an A* street route. Accepts custom start/end for swarm drones."""
+    pl = payload_kg if payload_kg is not None else PAYLOAD_KG
+    raw    = astar(start, end, payload_kg=pl)
     smooth = smooth_path(raw, window=5)
-    # Subsample to ~300 waypoints for animation smoothness
-    step = max(1, len(smooth) // 300)
-    route = []
+    step   = max(1, len(smooth) // 300)
+    route  = []
     for i in range(0, len(smooth), step):
         gx, gy = smooth[i]
         gx_i = max(0, min(W-1, int(gx)))
         gy_i = max(0, min(H-1, int(gy)))
-        # Street-level altitude: 2.8 units above terrain
-        alt = TERRAIN[gy_i][gx_i] * SZ + 2.8
+        alt  = TERRAIN[gy_i][gx_i] * SZ + 2.8
         route.append((gx * SXY, gy * SXY, alt))
     print(f"[*] Route: {len(route)} waypoints at street-canyon altitude.")
     return route
@@ -185,6 +182,8 @@ def compute_bifurcations():
     return bif
 
 BIFURCATIONS = compute_bifurcations()
+
+from swarm_controller import DroneAgent, FLEET, apply_collision_avoidance
 
 # =============================================================================
 # GEOMETRY HELPER
@@ -310,15 +309,40 @@ class ManhattanSim(ShowBase):
         print(f"[~] NOAA wind: {_noaa_spd:.0f} mph @ {_noaa_dir:.0f}deg -> "
               f"U={self._noaa_u} V={self._noaa_v} (integer fps, no sin())")
 
+        # -- Phase 22: Spawn swarm agents --------------------------------------
+        print(f"[*] Spawning {len(FLEET)} drone agents for swarm mission...")
+        self._agents = []
+        for i, (prof_key, pl_kg, start, end, color) in enumerate(FLEET):
+            agent = DroneAgent(
+                agent_id    = i,
+                profile_key = prof_key,
+                payload_kg  = pl_kg,
+                start_cell  = start,
+                end_cell    = end,
+                color       = color,
+                terrain     = TERRAIN,
+                route_fn    = build_route,
+                SXY         = SXY,
+                SZ          = SZ,
+                turb_seed   = self._turb_seed,
+            )
+            self._agents.append(agent)
+            status = "FLYABLE" if agent.weight_n < agent.max_thrust else "OVERWEIGHT-CRASH"
+            print(f"    Drone {i}: {prof_key} + {pl_kg}kg | "
+                  f"{agent.weight_n:.1f}N / {agent.max_thrust:.0f}N | {status} | "
+                  f"route: {start}->{end} | {len(agent.route)} wps")
+
         # ── Build scene ───────────────────────────────────────────────────────
         self._build_ground()
         self._build_city()
         self._build_bif_zones()
         self._build_wind_arrows()
         self._build_drone()
+        self._build_swarm_nodes()   # Phase 22: additional drone visuals
         self._trail_root = self.render.attachNewNode('trail')
         self._build_hud()
         self._init_jsbsim()
+
 
         self.camera.setPos(self._cam_pos_sm)
         self.camera.lookAt(Point3(*self.ROUTE[0]))
@@ -413,9 +437,37 @@ class ManhattanSim(ShowBase):
         self._drone.setScale(0.9)
         self._drone.setPos(*self.ROUTE[0])
 
+    def _build_swarm_nodes(self):
+        """Create colour-coded 3D nodes for swarm agents 1..N-1.
+        Agent 0 reuses the existing primary _drone node."""
+        self._agent_nodes = [self._drone]   # agent 0 = primary drone
+        for i, agent in enumerate(self._agents[1:], start=1):
+            node = self.loader.loadModel('models/misc/sphere')
+            r, g, b = agent.color
+            node.setColor(r, g, b, 1.0)
+            node.setScale(0.7)
+            node.reparentTo(self.render)
+            if agent.route:
+                node.setPos(*agent.route[0])
+            self._agent_nodes.append(node)
+            print(f"    [+] Swarm node {i}: color=({r:.1f},{g:.1f},{b:.1f})")
+
+    def _update_swarm(self, dt, t):
+        """Update all swarm agents and apply collision avoidance."""
+        close_pairs = apply_collision_avoidance(self._agents)
+        for i, agent in enumerate(self._agents):
+            agent.update(dt, t, TERRAIN, W, H, self._noaa_u, self._noaa_v)
+            # Move the 3D node
+            if i < len(self._agent_nodes):
+                self._agent_nodes[i].setPos(agent._px, agent._py, agent._pz)
+        if close_pairs:
+            for (ai, aj, dist) in close_pairs:
+                pass   # future: visual alert on close-approach
+
     def _build_hud(self):
         self._hud = OnscreenText(
             text='...', mayChange=True,
+
             scale=0.040, pos=(-1.60, 0.87),
             fg=(0.0, 1.0, 0.8, 1.0),
             shadow=(0, 0.12, 0.06, 0.7),
@@ -668,6 +720,9 @@ class ManhattanSim(ShowBase):
 
         # Trail
         self.trail_pts.append(Point3(lp))
+        # Phase 22: update all swarm agents
+        self._update_swarm(dt, t)
+
         if len(self.trail_pts) > 180:
             self.trail_pts.pop(0)
         if len(self.trail_pts) > 2:
