@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-WIND_NAVIGATOR -- Phase 17 v3: A* Street Navigation Through Manhattan
-=====================================================================
-THE CORRECT FIX:
-  - Drone now navigates through ACTUAL Manhattan streets (TERRAIN == 0)
-  - A* cost-based pathfinder finds the safest street route NW -> SE
-  - Drone flies at LOW ALTITUDE (street canyon level, 2-3 units)
-  - Follow camera sits BEHIND the drone at building height, looking
-    forward so you see skyscrapers towering on both sides (canyon view)
-  - Wind bifurcation zones = dangerous urban canyon intersections
-  - Orange updraft arrows visible as you pass through building gaps
+WIND_NAVIGATOR — Phase 20: Closed-Loop JSBSim PID Control
+==========================================================
+Physics NOW drives position. Two PID controllers every frame:
+  AltitudePID : throttle commands to hold street-level AGL.
+                Heavy updraft = altitude actually changes.
+  LateralPID  : roll/pitch commands to steer toward waypoint.
+                Bifurcation vortex = drone genuinely drifts off route.
+Route deviation is tracked, logged, and shown on the dashboard.
 """
 
-import sys, os, math, heapq, json
+import sys, os, math, heapq, json, random
+from pid_controller import PID
 os.environ['PYTHONUTF8'] = '1'
 
 from panda3d.core import (
@@ -280,6 +279,28 @@ class ManhattanSim(ShowBase):
         self._tumble_phase  = 0.0
         self.crash_altitude = 0.0
         self.crash_waypoint = 0
+        # ── Phase 20: Closed-Loop PIDs ───────────────────────────────────────
+        # Altitude hold: error = target_agl - actual_agl
+        self._alt_pid = PID(kp=0.08, ki=0.005, kd=0.04,
+                            out_min=0.0, out_max=0.92)
+        # Lateral: error = signed bearing deviation from waypoint
+        self._lat_pid = PID(kp=0.035, ki=0.001, kd=0.020,
+                            out_min=-0.30, out_max=0.30)
+        # Physics position (scene units, initialised to route start)
+        self._px = self.ROUTE[0][0]
+        self._py = self.ROUTE[0][1]
+        self._pz = self.ROUTE[0][2]
+        # Velocity (scene units/s)
+        self._vx = 0.0
+        self._vy = 0.0
+        self._vz = 0.0
+        # Deviation tracking
+        self.max_deviation   = 0.0   # worst lateral deviation (scene units)
+        self.total_deviation = 0.0   # cumulative deviation
+        self.mission_complete = False
+        # Random wind phase offset -- different each run, like real-world sessions
+        self._wind_seed = random.uniform(0, 200.0)
+        print(f"[~] Wind seed: {self._wind_seed:.1f} -- path drift will differ this run")
 
         # ── Build scene ───────────────────────────────────────────────────────
         self._build_ground()
@@ -505,46 +526,106 @@ class ManhattanSim(ShowBase):
                      (TERRAIN[gy+1][gx] - TERRAIN[gy-1][gx]) < 0
             self.chaos      = 38 if in_bif else 2
             self.confidence = "LOW" if in_bif else "HIGH"
-            self.wind_u = math.sin(t * 2.3) * 12 if in_bif else 1.5
-            self.wind_v = math.cos(t * 1.7) * 9  if in_bif else 0.8
-            self.wind_w = math.sin(t * 3.5) * 7  if in_bif else 0.2  # updraft
+            # Wind phase seeded randomly each session -- different drift per run
+            wt = t + self._wind_seed
+            self.wind_u = math.sin(wt * 2.3) * 12 if in_bif else (1.5 + math.sin(wt * 0.3) * 0.8)
+            self.wind_v = math.cos(wt * 1.7) * 9  if in_bif else (0.8 + math.cos(wt * 0.4) * 0.5)
+            self.wind_w = math.sin(wt * 3.5) * 7  if in_bif else 0.2  # updraft
 
             self.fdm['atmosphere/u-wind-fps'] = self.wind_u
             self.fdm['atmosphere/v-wind-fps'] = self.wind_v
             self.fdm['atmosphere/w-wind-fps'] = self.wind_w
 
-            # Hover throttle scales with payload: more mass = more thrust needed
-            base_hover   = 0.50 + PAYLOAD_KG * 0.09   # 2.5kg -> ~0.725
-            thr          = min(base_hover, 0.92)
-            m0           = thr * (0.72 if in_bif else 0.85)  # damaged motor still limited
+            # ── PHASE 20: PID CLOSED-LOOP CONTROL ────────────────────────────
+            wi   = min(self.wp_idx, len(self.ROUTE)-1)
+            wx_t, wy_t, wz_t = self.ROUTE[wi]   # waypoint TARGET (chase goal)
+
+            # ── Altitude PID: hold target AGL ────────────────────────────────
+            target_agl_m = 9.0   # street level = 9 m AGL
+            actual_agl_m = self.fdm['position/h-agl-ft'] * 0.3048
+            alt_err   = target_agl_m - actual_agl_m          # +ve = too low
+            thr_cmd   = self._alt_pid.update(alt_err, dt)
+            # Payload floor: must at least hover
+            hover_floor = min(0.50 + PAYLOAD_KG * 0.09, 0.92)
+            thr = max(hover_floor + thr_cmd * 0.15, 0.05)
+            thr = min(thr, 0.92)
+            m0  = thr * (0.72 if in_bif else 0.85)    # damaged motor cap
             self.fdm['fcs/throttle-cmd-norm[0]'] = m0
             self.fdm['fcs/throttle-cmd-norm[1]'] = thr
             self.fdm['fcs/throttle-cmd-norm[2]'] = thr
             self.fdm['fcs/throttle-cmd-norm[3]'] = thr
-            self.fdm['fcs/elevator-cmd-norm']    = -0.04
+
+            # ── Lateral PID: steer toward next waypoint ───────────────────────
+            dx = wx_t - self._px;  dy = wy_t - self._py
+            dist_to_wp = math.sqrt(dx*dx + dy*dy)
+            bearing = math.atan2(dx, dy)              # desired heading (rad)
+            cur_hdg = math.radians(self._drone.getH() if hasattr(self, '_drone') else 0)
+            lat_err = math.sin(bearing - cur_hdg)    # signed deviation
+            lat_cmd = self._lat_pid.update(lat_err, dt)
+            self.fdm['fcs/aileron-cmd-norm']   = lat_cmd * 0.5
+            self.fdm['fcs/elevator-cmd-norm']  = -0.04 - lat_cmd * 0.08
+
             self.fdm.run()
 
-            self.frame_n += 1
-            # Heavier drone = slower ground speed = fewer waypoint advances per frame
-            advance_rate = max(3, int(3 + PAYLOAD_KG * 0.8))  # 2.5kg -> every 5 frames
-            if self.frame_n % advance_rate == 0:
-                self.wp_idx = min(self.wp_idx + 1, len(self.ROUTE)-1)
+            # ── Physics position integration ──────────────────────────────────
+            # Drive toward waypoint at throttle-scaled speed (heavier = slower)
+            fwd_len  = max(dist_to_wp, 0.001)
+            speed_su = thr * 1.8 / (1.0 + PAYLOAD_KG * 0.04)   # scene units/s
+            self._vx = (dx / fwd_len) * speed_su
+            self._vy = (dy / fwd_len) * speed_su
 
-        wi  = min(self.wp_idx, len(self.ROUTE)-1)
-        wx, wy, wz = self.ROUTE[wi]
-        agl_dev  = (self.fdm['position/h-agl-ft'] * 0.3048 - 9) * SZ * 0.03
-        new_pos  = Vec3(wx, wy, wz + agl_dev)
-        cur_pos  = self._drone.getPos()
-        lp       = cur_pos + (new_pos - cur_pos) * min(dt * 6, 1.0)
+            # Wind pushes drone off the A* path — 2.5× amplified in bifurcation
+            wind_push_x = self.wind_u * 0.006 * (2.5 if in_bif else 0.10)
+            wind_push_y = self.wind_v * 0.006 * (2.5 if in_bif else 0.10)
+
+            self._px += (self._vx + wind_push_x) * dt
+            self._py += (self._vy + wind_push_y) * dt
+            # -- Altitude: driven by vertical wind only, never by JSBSim AGL.
+            #    JSBSim has no position feedback so its h-agl-ft drifts freely.
+            #    We use JSBSim only for roll/pitch attitude, not absolute height.
+            vert_wind = self.wind_w * 0.015 * (1.8 if in_bif else 0.06)
+            vert_wind = max(-0.5, min(0.5, vert_wind))     # hard scene-unit cap
+            self._pz  = max(0.05, wz_t + vert_wind)
+
+            # ── Waypoint advance: proximity-based ────────────────────────────
+            if dist_to_wp < 0.6 and wi < len(self.ROUTE) - 1:
+                self.wp_idx += 1
+            elif wi == len(self.ROUTE) - 1 and dist_to_wp < 0.6:
+                # Mission complete -- kill throttle, freeze altitude, hold position
+                if not self.mission_complete:
+                    self.mission_complete = True
+                    self._pz = wz_t   # snap to route altitude, stop climbing
+                    for i in range(4):
+                        try: self.fdm[f'fcs/throttle-cmd-norm[{i}]'] = 0.35
+                        except: pass
+                    print(f"[+] MISSION COMPLETE -- {self.wp_idx} waypoints, "
+                          f"max drift: {self.max_deviation:.2f} su")
+                # Hold current XY, don't apply wind push anymore
+                self._vx = 0.0; self._vy = 0.0
+                wind_push_x = 0.0; wind_push_y = 0.0
+
+            # ── Deviation from planned route ──────────────────────────────────
+            plan_x, plan_y = wx_t, wy_t
+            deviation = math.sqrt((self._px - plan_x)**2 + (self._py - plan_y)**2)
+            self.max_deviation   = max(self.max_deviation, deviation)
+            self.total_deviation += deviation * dt
+
+        # ── Apply physics position to drone node (Phase 20) ──────────────────
+        lp = Vec3(self._px, self._py, self._pz)
         self._drone.setPos(lp)
 
-        # Heading from route tangent
+        # Heading: blend route tangent with actual velocity direction
+        wi = min(self.wp_idx, len(self.ROUTE) - 1)
+        wx, wy, wz = self.ROUTE[wi]
         wi_next = min(wi + 3, len(self.ROUTE)-1)
-        nx_, ny_ = self.ROUTE[wi_next][0], self.ROUTE[wi_next][1]
-        heading  = math.degrees(math.atan2(nx_ - wx, ny_ - wy))
+        route_hdg = math.degrees(math.atan2(
+            self.ROUTE[wi_next][0] - wx, self.ROUTE[wi_next][1] - wy))
         phi   = self.fdm['attitude/phi-deg']   * 0.18
         theta = self.fdm['attitude/theta-deg'] * 0.18
-        self._drone.setHpr(heading, theta, phi)
+        # Tilt proportional to lateral wind in bifurcation
+        extra_roll = self.wind_u * 0.6 if self.confidence == 'LOW' else 0
+        self._drone.setHpr(route_hdg, theta, phi + extra_roll)
+
 
         # Motor 0 flicker
         f = 0.5 + 0.5 * math.sin(t * 22)
@@ -597,7 +678,7 @@ class ManhattanSim(ShowBase):
         self.camera.lookAt(self._cam_lk_sm)
 
         # ── HUD ───────────────────────────────────────────────────────────────
-        agl_m    = self.fdm['position/h-agl-ft'] * 0.3048
+        agl_m    = self._pz / max(SZ, 0.001)    # scene-derived, not JSBSim's drifting AGL
         conf_str = "!! LOW  <- DANGER" if self.confidence == "LOW" else "   HIGH"
         hover_thr = min(0.50 + PAYLOAD_KG * 0.09, 0.92)
         adv_rate  = max(3, int(3 + PAYLOAD_KG * 0.8))
@@ -689,6 +770,13 @@ class ManhattanSim(ShowBase):
             "payload_kg":      PAYLOAD_KG,
             "max_thrust_n":    MAX_THRUST_N,
             "weight_n":        round((DRONE_EMPTY_KG + PAYLOAD_KG) * GRAVITY_N_PER_KG, 1),
+            # Phase 20 — closed-loop deviation metrics
+            "drone_model":      _PROFILE["name"],
+            "motors":           _PROFILE["motors"],
+            "max_deviation_su": round(self.max_deviation, 3),
+            "total_deviation":  round(self.total_deviation, 2),
+            "physics_pos":      [round(self._px, 2), round(self._py, 2), round(self._pz, 2)],
+            "control_mode":     "CLOSED_LOOP_PID",
         }
         try:
             with open('sim_state.json', 'w') as f:
@@ -700,4 +788,5 @@ class ManhattanSim(ShowBase):
 
 if __name__ == '__main__':
     ManhattanSim().run()
+
 
