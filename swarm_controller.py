@@ -28,8 +28,8 @@ FLEET = [
     ("HEXA_PRO",   10.0, (4,  4),  (74, 74), (0.0, 0.9, 1.0)),
     # Drone 1: light parcel, NE -> SW (cross-town)
     ("F450",        2.0, (74,  4), (4,  74), (0.2, 1.0, 0.4)),
-    # Drone 2: industrial, mid -> SE  (short haul)
-    ("OCTO_CARGO", 15.0, (4,  40), (74, 74), (1.0, 0.5, 0.1)),
+    # Drone 2: industrial, mid -> MidEast  (short haul, DIFFERENT endpoint)
+    ("OCTO_CARGO", 15.0, (4,  40), (74, 40), (1.0, 0.5, 0.1)),
 ]
 
 

@@ -445,7 +445,7 @@ class ManhattanSim(ShowBase):
             node = self.loader.loadModel('models/misc/sphere')
             r, g, b = agent.color
             node.setColor(r, g, b, 1.0)
-            node.setScale(0.7)
+            node.setScale(0.09)   # misc/sphere native radius ~10 -- 0.09 -> ~0.9 unit diameter
             node.reparentTo(self.render)
             if agent.route:
                 node.setPos(*agent.route[0])
