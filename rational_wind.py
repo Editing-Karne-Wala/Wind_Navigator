@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-WIND_NAVIGATOR -- Phase 21: NOAA Rational Wind Integration
-==========================================================
-Replaces math.sin() mock oscillator with NOAA GFS wind data.
+WIND_NAVIGATOR -- Phase 21+25: NOAA Rational Wind Integration
+=============================================================
+Phase 21: Replaces math.sin() mock oscillator with NOAA GFS wind decomposition.
+Phase 25: load_noaa_wind() now calls live NOAA METAR API (KLGA+KJFK).
+          Cached 20 minutes; never blocks the render loop.
 
 NOAA wind data arrives as:
   - speed_mph  : integer or float (we floor() to integer)
@@ -21,6 +23,7 @@ integers scaled by 10000, preserving the deterministic rational claim.
 """
 
 import math, json, os
+from noaa_wind_client import get_noaa_wind as _get_noaa_wind
 
 # ── Rational sin/cos lookup table (integer-scaled, 1-degree resolution) ───────
 # Values are sin(deg) * 10000, rounded to nearest integer.
@@ -49,21 +52,21 @@ def rational_wind_components(speed_mph: float, direction_deg: float):
     return int(u_fps), int(v_fps)   # returned as integers -- fully rational
 
 
-def load_noaa_wind(state_file='sim_state.json'):
+def load_noaa_wind():
     """
-    Read the latest NOAA wind from the mission API state,
-    or return calm default if unavailable.
+    Phase 25: Fetch live METAR wind from NOAA Aviation Weather Center.
+    Stations: KLGA (LaGuardia) + KJFK (JFK), vector-averaged.
+    Cache TTL: 20 minutes (matches METAR special obs schedule).
+    Fallback: NYC 1991-2020 climatological mean (9.2 mph @ 215 deg).
+
+    Never blocks the render loop -- stale cache served while
+    background thread fetches a fresh reading.
     """
     try:
-        with open(state_file) as f:
-            s = json.load(f)
-        # mission_api.py writes noaa_wind into sim_state if available
-        noaa = s.get('noaa_wind', {})
-        spd  = float(noaa.get('speed_mph', 8))
-        dirn = float(noaa.get('direction_deg', 220))
-        return spd, dirn
+        spd, dirn = _get_noaa_wind(blocking=False)
+        return float(spd), float(dirn)
     except Exception:
-        return 8.0, 220.0   # calm default: 8mph from SW
+        return 9.2, 215.0   # hard fallback if even client module breaks
 
 
 # ── Rational LBM vorticity (integer arithmetic only) ─────────────────────────

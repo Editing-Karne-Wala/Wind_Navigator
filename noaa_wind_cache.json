@@ -1,0 +1,20 @@
+{
+  "speed_mph": 4.58,
+  "direction_deg": 15.0,
+  "timestamp": "2026-04-12T08:08:16.275080+00:00",
+  "stations": [
+    {
+      "station": "KLGA",
+      "speed_mph": 4.6,
+      "direction_deg": 10,
+      "raw": "METAR KLGA 120751Z 01004KT 10SM CLR 07/M03 A3045 RMK AO2 SLP311 T00721033"
+    },
+    {
+      "station": "KJFK",
+      "speed_mph": 4.6,
+      "direction_deg": 20,
+      "raw": "METAR KJFK 120751Z 02004KT 10SM CLR 07/M03 A3046 RMK AO2 SLP315 T00671033"
+    }
+  ],
+  "source": "NOAA_METAR"
+}
