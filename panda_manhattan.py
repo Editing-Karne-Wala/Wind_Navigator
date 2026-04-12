@@ -12,6 +12,7 @@ Route deviation is tracked, logged, and shown on the dashboard.
 
 import sys, os, math, heapq, json, random
 from pid_controller import PID
+from rational_wind import rational_wind_components, load_noaa_wind, lbm_bifurcation_score
 os.environ['PYTHONUTF8'] = '1'
 
 from panda3d.core import (
@@ -298,9 +299,16 @@ class ManhattanSim(ShowBase):
         self.max_deviation   = 0.0   # worst lateral deviation (scene units)
         self.total_deviation = 0.0   # cumulative deviation
         self.mission_complete = False
-        # Random wind phase offset -- different each run, like real-world sessions
-        self._wind_seed = random.uniform(0, 200.0)
-        print(f"[~] Wind seed: {self._wind_seed:.1f} -- path drift will differ this run")
+        # Wind seed: used only for LOCAL turbulence INTEGER recurrence (Phase 21)
+        # Global wind now comes from NOAA rational decomposition -- no sin()
+        self._turb_seed = random.randint(1000, 9999)   # integer seed
+        self._turb_x    = self._turb_seed              # integer oscillator state X
+        self._turb_y    = self._turb_seed + 1337       # integer oscillator state Y
+        # Load NOAA baseline wind (rational integer components)
+        _noaa_spd, _noaa_dir = load_noaa_wind()
+        self._noaa_u, self._noaa_v = rational_wind_components(_noaa_spd, _noaa_dir)
+        print(f"[~] NOAA wind: {_noaa_spd:.0f} mph @ {_noaa_dir:.0f}deg -> "
+              f"U={self._noaa_u} V={self._noaa_v} (integer fps, no sin())")
 
         # ── Build scene ───────────────────────────────────────────────────────
         self._build_ground()
@@ -526,11 +534,31 @@ class ManhattanSim(ShowBase):
                      (TERRAIN[gy+1][gx] - TERRAIN[gy-1][gx]) < 0
             self.chaos      = 38 if in_bif else 2
             self.confidence = "LOW" if in_bif else "HIGH"
-            # Wind phase seeded randomly each session -- different drift per run
-            wt = t + self._wind_seed
-            self.wind_u = math.sin(wt * 2.3) * 12 if in_bif else (1.5 + math.sin(wt * 0.3) * 0.8)
-            self.wind_v = math.cos(wt * 1.7) * 9  if in_bif else (0.8 + math.cos(wt * 0.4) * 0.5)
-            self.wind_w = math.sin(wt * 3.5) * 7  if in_bif else 0.2  # updraft
+
+            # ── PHASE 21: Rational Wind (no sin/cos) ─────────────────────────
+            # Global wind: NOAA rational integer components (fps)
+            base_u = self._noaa_u
+            base_v = self._noaa_v
+
+            if in_bif:
+                # Local bifurcation turbulence: integer Chebyshev recurrence
+                # x_{n+1} = (2 * x_n * x_n - x_{n-1}^2) mod PRIME  (integer only)
+                PRIME = 104729  # large prime for period length
+                new_x = (2 * self._turb_x - self._turb_y) % PRIME
+                self._turb_y = self._turb_x
+                self._turb_x = new_x
+                # Map to [-12, +12] fps range (integer arithmetic)
+                tu = ((self._turb_x % 25) - 12)   # integer, range [-12, 12]
+                tv = ((self._turb_y % 19) - 9)    # integer, range [-9, 9]
+                tw = ((self._turb_x % 15) - 7)    # integer, range [-7, 7]
+                self.wind_u = float(base_u + tu)
+                self.wind_v = float(base_v + tv)
+                self.wind_w = float(tw)
+            else:
+                # Calm street: NOAA global wind only (rational, steady)
+                self.wind_u = float(base_u)
+                self.wind_v = float(base_v)
+                self.wind_w = 0.2
 
             self.fdm['atmosphere/u-wind-fps'] = self.wind_u
             self.fdm['atmosphere/v-wind-fps'] = self.wind_v
@@ -777,6 +805,9 @@ class ManhattanSim(ShowBase):
             "total_deviation":  round(self.total_deviation, 2),
             "physics_pos":      [round(self._px, 2), round(self._py, 2), round(self._pz, 2)],
             "control_mode":     "CLOSED_LOOP_PID",
+            "wind_mode":        "NOAA_RATIONAL_INTEGER",   # Phase 21: no sin()
+            "noaa_u_fps":       self._noaa_u,
+            "noaa_v_fps":       self._noaa_v,
         }
         try:
             with open('sim_state.json', 'w') as f:
