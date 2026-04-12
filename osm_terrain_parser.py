@@ -27,7 +27,7 @@ def build_overpass_query():
     return query
 
 def fetch_osm_data(query):
-    print("🌍 Querying OpenStreetMap Overpass API for real-world geometry...")
+    print("[OSM] Querying OpenStreetMap Overpass API for real-world geometry...")
     url = "http://overpass-api.de/api/interpreter"
     data = {"data": query}
     data_encoded = urllib.parse.urlencode(data).encode('utf-8')
@@ -57,7 +57,7 @@ def point_in_polygon(x, y, poly):
 def process_buildings(osm_data):
     buildings = []
     elements = osm_data.get('elements', [])
-    print(f"🏗️  Found {len(elements)} structural elements in the bounding box.")
+    print(f"[OSM] Found {len(elements)} structural elements in the bounding box.")
     
     for element in elements:
         tags = element.get('tags', {})
@@ -88,7 +88,7 @@ def process_buildings(osm_data):
     return buildings
 
 def rasterize_terrain(buildings):
-    print(f"🧱 Rasterizing {len(buildings)} building polygons into a {GRID_WIDTH}x{GRID_DEPTH} Voxel Mask...")
+    print(f"[OSM] Rasterizing {len(buildings)} building polygons into a {GRID_WIDTH}x{GRID_DEPTH} Voxel Mask...")
     
     # Initialize a flat 2D grid containing the maximum height at that coordinate
     terrain_grid = [[0.0 for _ in range(GRID_WIDTH)] for _ in range(GRID_DEPTH)]
@@ -113,7 +113,7 @@ def rasterize_terrain(buildings):
     return terrain_grid
 
 def preview_ascii(grid):
-    print("\n🗺️  TERRAIN PREVIEW (Top-Down ASCII Map):\n")
+    print("\n[OSM] TERRAIN PREVIEW (Top-Down ASCII Map):\n")
     # We print backwards so North is Up
     for row in reversed(grid):
         line = ""
@@ -127,12 +127,12 @@ def preview_ascii(grid):
             elif h < 100:
                 line += "# "    # Tall building
             else:
-                line += "█ "    # Skyscraper / Massive block
+                line += "M "    # Skyscraper / Massive block
         print(line)
-    print("\nLegend: [.] Street  [o] Low  [X] Mid  [#] High  [█] Skyscraper\n")
+    print("\nLegend: [.] Street  [o] Low  [X] Mid  [#] High  [M] Skyscraper\n")
 
 def save_voxel_mask(grid, filename="urban_terrain.txt"):
-    print(f"💾 Exporting Voxel Engine Mask to {filename}...")
+    print(f"[OSM] Exporting Voxel Engine Mask to {filename}...")
     with open(filename, 'w') as f:
         # Header for the C++ engine to parse sizes
         f.write(f"{GRID_WIDTH} {GRID_DEPTH}\n")
@@ -140,7 +140,7 @@ def save_voxel_mask(grid, filename="urban_terrain.txt"):
             # We output integer heights for the exact discrete integer math
             line = " ".join([str(int(h)) for h in row])
             f.write(line + "\n")
-    print("✅ Export complete. Ready for C++ integration.")
+    print("[OSM] Export complete. Ready for integration.")
 
 if __name__ == "__main__":
     query = build_overpass_query()
