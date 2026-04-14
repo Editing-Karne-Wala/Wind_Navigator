@@ -1,418 +1,79 @@
 # Wind_Navigator
-### Integer-Native Computational Fluid Dynamics for Real-Time Drone Weather Routing
+### Deterministic Urban Drone Networking & Vortex Avoidance
 
-> Replacing 60 years of floating-point Navier-Stokes approximation with 
-> thermodynamically perfect, integer-only Lattice Boltzmann physics.
-
----
-
-## The Problem We Are Solving
-
-Commercial drone logistics (Amazon Prime Air, Zipline, Skydio) are bottlenecked by battery constraints. Wind resistance, micro-vortices between skyscrapers, and unexpected thermal updrafts cause drones to burn exponentially more power than optimal routes require.
-
-Current solutions use floating-point CFD solvers (OpenFOAM, ANSYS) that:
-- Require expensive supercomputer clusters.
-- Take 10-20 minutes to converge on a simulation.
-- Accumulate rounding errors that corrupt long-term simulation stability.
-
-**Wind_Navigator** delivers real-time (sub-15ms) wind vector routing using a purely integer-based approach. Minimum compute overhead optimized for edge deployment.
+> **Current State:** Phase 28 — Validated Integer Physics & Real-World Bridge.
+> An autonomous flight-management engine designed to detect urban building vortices and send MAVLink rerouting alerts to PyHawk/ArduCopter drones before they hit turbulent airspace, using real NOAA METAR data and live OpenStreetMap structural footprints.
 
 ---
 
-## The Core Innovation
+## The Core Concept: Integer Gradient Cross-Product Bifurcation Detection
 
-Classical solvers rely on continuous calculus and irrational numbers (like $\sqrt{2}/2$). A computer's binary representation of these is always lossy, leading to "Numerical Dissipation"—phantom energy leakage.
+Traditional Navier-Stokes approximations (like OpenFOAM) use floating-point calculus. Float approximation creates state drift across heterogeneous parallel hardware architectures (the "IEEE 754 fiasco"), which causes swarm collisions in simulation environments.
 
-**Wind_Navigator** applies **Rational Trigonometry** (Wildberger, UNSW) to:
-- Replace continuous derivatives with discrete integer summations.
-- Use explicit 3D collision metrics scaled by 36 (D2Q9 and D3Q19 Lattice Models).
-- **The Remainder Vault:** Audits voxel mass per frame and deposits lost integers back into the system, guaranteeing $\sum(mass_{t+1}) == \sum(mass_{t})$.
-- **VRAM "Pull" Stream:** Avoids GPU race conditions by pulling memory from neighbors instead of scattering it, unlocking massive parallel execution.
+**Wind_Navigator** bypasses floating-point derivatives by utilizing **Integer gradient cross-product bifurcation detection**.
+Instead of solving the complete Navier-Stokes field, we use an O(1) integer proxy to flag aerodynamic "saddle points" where severe turbulent mixing occurs at the corners of buildings.
 
----
-
-## Dynamical Systems Analysis: Lyapunov Stability & Noise Resilience
-
-The most critical question in autonomous drone deployment is not *"Is this simulation correct?"* but rather *"Does a small error compound into a catastrophic crash?"*
-
-Wind_Navigator answers this using **Rational Dynamical Systems Theory**, replacing classical irrational methods with integer-native equivalents.
-
-### The Rational Lyapunov Substitution
-The classical Lyapunov Exponent requires `log()`, an irrational operation. We replace it entirely with the **Integer Divergence Ratio**:
-
-$$\text{Chaos Score}(t) = \frac{|Sim_A[t] - Sim_B[t]|}{|Sim_A[0] - Sim_B[0]|}$$
-
-- Numerator and denominator are both integers.
-- No `log()`, `sqrt()`, or `sin()` is used at any point.
-- Fully compliant with **Rational Trigonometry** (Wildberger, UNSW).
-
-### The Butterfly Test Result
-We ran two parallel CUDA simulations over a 500×500 Manhattan grid for 5,000 frames:
-- **Sim A:** Baseline hurricane with OSM skyscraper walls.
-- **Sim B:** Identical to Sim A + **exactly 1 integer unit** of perturbation at the center voxel.
-
-| Metric | Value |
-| :--- | :--- |
-| **Initial Perturbation (D₀)** | 1 integer unit |
-| **Final Chaos Score (Dt/D₀)** | **0** |
-| **Affected Voxels at T=5000** | 0 / 250,000 |
-| **Lyapunov Exponent Sign** | **Negative (Stable)** |
-
-### Engineering Significance
-> **A Chaos Score of 0 means: no matter how noisy the GPS sensor, how turbulent the air, or how imperfect the initial wind reading — a 1-unit error in the Wind_Navigator model will always shrink to zero, never grow.**
-
-This is the mathematical foundation for **FAA-grade reliability**. The Remainder Vault, originally designed for mass conservation, is simultaneously proven to be a **Lyapunov Stability Mechanism** — the system is self-healing by construction.
-
-This property distinguishes Wind_Navigator from all floating-point CFD alternatives, which accumulate Numerical Dissipation errors that grow unboundedly over time.
-
----
-
-## Benchmark Results
-
-### 2D Grid Validations (D2Q9)
-| Metric | Value |
-| :--- | :--- |
-| **Engine Type** | Pure Integer ALU |
-| **Grid Size (2D)** | 60 × 25 voxels |
-| **Time Steps (Validation)** | 10,000 |
-| **Energy Conservation** | 100.00% |
-| **Floating Point Operations** | 0 |
-| **Compute Time (100 steps)** | ~2.5ms on i5-11400H CPU |
-
-### 3D Volume Validations (D3Q19)
-| Metric | Value |
-| :--- | :--- |
-| **Lattice Dimension** | D3Q19 (19 discreet momentum vectors) |
-| **Grid Size (3D)** | 40 × 20 × 20 voxels |
-| **Time Steps (Validation)** | 1,000 |
-| **Energy Conservation** | 100.00% |
-| **Floating Point Operations** | 0 |
-
-### Edge-API Logistics Server (FastAPI + Native C++)
-| Metric | Value |
-| :--- | :--- |
-| **Drone Swarm Stress Test** | 250 Concurrent Real-time Queries |
-| **Average Response Latency** | ~15ms - 30ms per Drone |
-| **Throughput Architecture** | Dynamic Python-HTTP to C++ Voxel Allocation |
-| **4D Horizon Projection** | +200 Future Frame Extrapolation per ping |
-
-### GPU Hardware Acceleration (CUDA NVIDIA RTX 2050)
-| Metric | Value |
-| :--- | :--- |
-| **Compute Method** | Massively Parallel (3,907 CUDA Blocks x 256 Threads) |
-| **Grid Size (Megacity)** | 1,000 × 1,000 voxels (1,000,000 simultaneous voxels) |
-| **Time Steps** | 10,000 frames (Full Stress Run) |
-| **Execution Architecture** | **Deterministic Hash Optimization** (Bypasses TDR Watchdog) |
-| **Mass Conservation Audit** | **100.00%** (Remains perfect under chaotic noise) |
-
----
-
-## Phase 10: CUDA Deterministic Hash Validation
-
-To bypass the Windows TDR (Timeout Detection and Recovery) watchdog timer which often hangs long-running GPU kernels, we implemented a custom **Deterministic Pseudo-Random Generator** directly in the CUDA kernel.
-- **Bitwise Integer Hashing:** Replaced `curand` with a PCG-based fast hash.
-- **Watchdog Immunity:** Simulated 10,000 frames of the Manhattan grid without a single kernel timeout.
-
----
-
-## Phase 11: NASA-Grade Aerodynamic Validation (JSBSim)
-
-We successfully transitioned from pure fluid physics to **Real-Time Aerodynamic Flight Validation** using the NASA-grade JSBSim flight dynamics engine.
-
-### 1. F450 Quadcopter Aerodynamic Bridge
-Using `jsbsim_bridge.py`, we mapped our integer wind vectors directly into the physical model of a DJI F450 quadrotor. This validated that our Wind_Navigator data creates real, predictable physical lift on drone airframes.
-
-### 2. Energy Arbitrage Proof
-Through the **3D Real-Time Visualizer** (`visualizer_3d.py`), we demonstrated that a drone could fly for **50% of its mission time with zero motor throttle** by capturing the thermal updrafts predicted by our D3Q19 lattice engine.
-- **Initial Alt:** 100 ft
-- **Motors Cut:** T=10s
-- **Final Alt (Motors OFF):** 112 ft
-- **Massive Lead:** The drone physically gained 12 feet of altitude while consuming **0.0 Watts** of battery power.
-
-### 3. Sim2Real Gap Analysis
-The JSBSim validation proves that the Wind_Navigator integer model is physically compatible with FAA-standard flight dynamics, closing the conceptual gap between code and reality.
-
----
-
-## Phase 8: Autonomous Flight and Swarm Validation
-
-The final stage of development successfully tied the predicted physics environments directly into the autonomy of the drone's flight controller, using A* Pathfinding and Spatiotemporal mapping.
-
-### 1. The UNIX Atomic Time 4D Router
-Drones don't use arbitrary start times. They synchronize to GPS Satellite Universal Data. The `router_4d.cpp` was written for embedded C++ IoT chips. The A* algorithm utilizes absolute Universal Time Variables. Because the Drone intrinsically knows it will arrive at coordinate $X=25$ exactly 15 seconds in the future, it mathematically intersects moving updrafts, automatically cutting its motors to "surf" the weather. 
-
-### 2. Live OpenStreetMap Geometry Parsing
-Using `router_4d_osm.cpp`, the algorithm ingested the live skyline architecture of Midtown Manhattan. The pathfinder correctly altered its flight plan from a horizontal flight to a massive vertical climb to avoid 170-foot concrete walls, prioritizing mechanical lift generated by the 3D footprint of buildings to save battery.
-
-### 3. The 100,000 Drone CUDA "Nature" Stress Test
-To prove why 4D Pathfinders are required over standard drone algorithms (Greedy-Flight), we dispatched a Monte Carlo Swarm Simulator (`cuda_swarm_pathfinder.cu`) into a chaotic Category-3 Hurricane environment. 
-- **100,000** Drones Dispatched into the matrix using parallel CUDA streams.
-- **100,000** Drones failed to reach the target before battery depletion. 
-- *Finding:* Pure directional flight in turbulent weather leads to catastrophic deviation, mathematically proving the absolute necessity of the Wind_Navigator predictive routing infrastructure.
-
----
-
-## Phase 9: PX4 SITL Validation (The Sim2Real Proof)
-
-We bridged the "Sim2Real Gap" by connecting the Wind_Navigator API directly to an industry-standard **PX4 Autopilot** running within the **Gazebo 3D Physics Simulator**. The following data was extracted directly from the **209.1 MB** binary `.ulg` flight log generated by the virtual drone.
-
-### **Flight Telemetry Breakdown (Log: 15_50_48.ulg)**
-
-| Telemetry Topic | Samples | Data Density | Engineering Significance |
-| :--- | :--- | :--- | :--- |
-| **`vehicle_local_position`** | **116,343** | **22.3 MB** | Reaction to discrete integer voxels. |
-| **`vehicle_global_position`** | **116,213** | **7.7 MB**  | 4D spatial accuracy. |
-| **`vehicle_thrust_setpoint`** | **46,539**  | **1.3 MB**  | Captures "GLIDE" energy arbitrage. |
-
----
-
-## Phase 12: Integer Vortex Memory — Dynamic Systems Core
-
-We upgraded the CUDA kernel by giving every voxel a **3-frame ring buffer** (`vortex_memory[MEMORY_DEPTH]`) to track the history of its mass state. This is the foundational layer for detecting Dynamic System behaviors in the airspace.
-
-### The Rational Trigonometry Constraint
-All comparisons are pure integer operations. No `log()`, `sqrt()`, or `sin()` is used. Limit cycles are detected by:
-$$\text{Limit Cycle} \iff |mass_t - mass_{t-N}| \leq \frac{mass_t}{1000} + 1$$
-
-This is a **rational proportional threshold** — the tolerance is an integer fraction of the current mass, not a floating-point constant.
-
-### Phase 12 Validation Results (`cuda_dynamic_memory.cu`)
-
-| Audit | Result | Detail |
-| :--- | :--- | :--- |
-| **Remainder Vault** | ✅ PASS | 1,000,000,000 → 1,000,000,000. Zero drift across 10,000 frames. |
-| **Dynamic Detection** | ✅ OPERATIONAL | 39,956 zero-mass stable fixed points detected (thermodynamic equilibrium). Memory infrastructure validated. |
-| **Ring Buffer Integrity** | ✅ PASS | 0 cursor errors across all voxels. |
-
----
-
-## Phase 13: Rational Lyapunov Divergence Monitor — Chaos Theory Core
-
-We implemented the **Butterfly Test**: two identical CUDA simulations run in parallel (`Sim A` and `Sim B`), with `Sim B` seeded with exactly **+1 integer unit** of perturbation at a single voxel at T=0.
-
-### The Rational Substitution (No `log()`)
-$$\text{Chaos Score}(t) = \frac{|Sim_A[t] - Sim_B[t]|}{|Sim_A[0] - Sim_B[0]|}$$
-
-Both numerator and denominator are integers. Fully Rational Trigonometry compliant.
-
-### Phase 13 Validation Results (`cuda_lyapunov_monitor.cu`)
-
-| Audit | Result | Detail |
-| :--- | :--- | :--- |
-| **Remainder Vault (Sim A)** | ✅ PASS | Mass tracked identically across 5,000 frames. |
-| **Remainder Vault (Sim B)** | ✅ PASS | Independently conserved. |
-| **Butterfly Effect** | ✅ CHAOS SCORE = 0 | 1-unit perturbation **converged to zero** across all 250,000 voxels. |
-
-### The Most Important Finding: The Engine Is Lyapunov Stable
-A Chaos Score of `0` is the **ideal result for an aerospace routing system**: the Remainder Vault acts as a Lyapunov Stability Mechanism, meaning small sensor errors and hardware noise cannot compound into large prediction errors. This gives the engine a **Negative Lyapunov Exponent**—a provably self-correcting, FAA-certification-grade property.
-
----
-
-## Phase 14: Rational Attractor Mapping + Phase-Aware 4D Router
-
-### Part 1: CUDA Attractor Mapper (`cuda_attractor_map.cu`)
-Five engineered attractor "pockets" (walled enclosures with 1-cell openings) were injected into a 250×250 Manhattan grid. After 3,000 frames of LBM simulation, each voxel was classified using pure integer comparison:
-
-- **Fixed Point:** `|mass[t] - mass[t-1]| ≤ tolerance`
-- **Limit Cycle (Period-2):** `|mass[t] - mass[t-2]| ≤ tolerance AND |mass[t] - mass[t-1]| > tolerance`
-- **Limit Cycle (Period-3):** `|mass[t] - mass[t-3]| ≤ 2×tolerance`
-
-The Remainder Vault remained **100% unbroken** across all 3,000 frames.
-
-### Part 2: Phase-Aware 4D Router (`router_4d_attractor.cpp`)
-The router was updated with "Dance Partner" logic. The drone's speed (integer voxels/frame) is micro-adjusted so that arrival at each attractor zone coincides with its **weakest phase** — when the oscillating mass is at its minimum, drag is lowest.
-
-**Rational Rule:** `Phase = (current_frame + travel_frames) % period` — pure integer modular arithmetic. No `sqrt()`, no `log()`.
-
-**Distance Metric:** Manhattan distance (no Euclidean `sqrt()`).
-
-| Pocket | Attractor Period | Aligned Speed | Arrival Phase | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Pocket-A** | 20 frames | 3 vox/frame | 10 | ✅ PHASE-LOCKED |
-| **Pocket-B** | 16 frames | 3 vox/frame | 8  | ✅ PHASE-LOCKED |
-| **Pocket-C** | 24 frames | 6 vox/frame | 14 | ⚡ APPROX (±2 frames) |
-| **Pocket-D** | 18 frames | 11 vox/frame | 9  | ✅ PHASE-LOCKED |
-| **Pocket-E** | 14 frames | 5 vox/frame | 7  | ✅ PHASE-LOCKED |
-
-**Result: 4/5 PHASE-LOCKED. Total mission: 119 frames. Rational arithmetic only.**
-
----
-
-## Phase 14 v2: Router Upgrade — 5/5 Phase-Lock Achieved
-
-Three fixes were applied to `router_4d_attractor_v2.cpp` to upgrade from 4/5 to 5/5 PHASE-LOCKED:
-
-- **Fix 1 — Rational Sub-Voxel Speeds:** Speed expressed as `p/q` (both integers). Search over `p ∈ [1..20], q ∈ [1..4]`. Purely integer arithmetic — no floats used.
-- **Fix 2 — Phase Parking:** If Fix 1 cannot find exact alignment, compute minimum integer wait frames: `wait = (weak_phase - arrival_phase + period) % period`. Drone hovers at approach zone.
-- **Fix 3 — Phase-First Backward Planning:** Required departure frame computed before speed search, ensuring the router respects phase constraints from the start.
-
-| Pocket | Speed Used | Travel | Wait | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Pocket-A** | 1/1 vox/frame | 90f | 0f | ✅ PHASE-LOCKED |
-| **Pocket-B** | 8/3 vox/frame | 30f | 0f | ✅ PHASE-LOCKED |
-| **Pocket-C** | 1/1 vox/frame | 180f | 0f | ✅ PHASE-LOCKED (was APPROX) |
-| **Pocket-D** | 10/1 vox/frame | 15f | 0f | ✅ PHASE-LOCKED |
-| **Pocket-E** | 20/3 + Wait | 15f | 13f | ✅ PHASE-LOCKED+W |
-
-**Result: 5/5 PHASE-LOCKED. Rational arithmetic only. No sqrt, no log, no float.**
-
----
-
-## Phase 15: Bifurcation Zone Detection + Confidence-Scored API
-
-### The Safety Wall
-
-**The Rational Rule:** No continuous gradient (irrational). Uses the **Integer Divergence Criterion**:
-
+### How it works natively in `rational_wind.py`:
+```python
+dx = terrain[gy][gx+1] - terrain[gy][gx-1]   # Integer Terrain Gradient X
+dy = terrain[gy+1][gx] - terrain[gy-1][gx]   # Integer Terrain Gradient Y
+is_bifurcation = (dx * dy < 0)               # Gradient Vector Crossing Check
 ```
-dvx_dx = vx[East] - vx[West]        (integer subtraction)
-dvy_dy = vy[North] - vy[South]      (integer subtraction)
-BIFURCATION iff  dvx_dx * dvy_dy < 0
-```
-
-One axis stretching + one axis compressing = topological saddle point = bifurcation zone. The integer product check replaces all irrational continuous analysis.
-
-### Validation (`bifurcation_detector.cpp`)
-
-10 saddle-point velocity fields were directly injected into a 150×150 grid. 10 non-saddle control fields were also injected to validate zero false positives.
-
-| Audit | Result |
-| :--- | :--- |
-| **Saddles Detected** | 10 / 10 ✅ |
-| **False Positives** | 0 ✅ |
-| **Irrational Ops** | Zero |
-
-### Confidence-Scored API (`server.py`)
-
-`server.py` updated. The `/route` endpoint now returns:
-
-```json
-{
-  "drone_id": "DELTA-7",
-  "status": "SAFE",
-  "wind_vector": {"vx": 3, "vy": -1, "vz": 0},
-  "chaos_score": 10,
-  "confidence": "MEDIUM"
-}
-```
-
-| `chaos_score` | `confidence` | Meaning |
-| :--- | :--- | :--- |
-| `0` | `HIGH` | No bifurcation zones near path |
-| `1–3` | `MEDIUM` | Proceed with caution |
-| `4+` | `LOW` | High turbulence — consider re-routing |
+*Note: Phase 27 External CFD Validation exposed that this 1D integer proxy misses 50% of building corners and straight canyon sheers. A full D2Q9 Lattice Boltzmann streaming step (Phase 29) is slated to correct this mathematical hole entirely.*
 
 ---
 
-## Stress Test Results
+## Live Performance & Features
 
-| Test | Dimension | Scenario | Result |
-| :--- | :--- | :--- | :--- |
-| **Antimatter Void** | 2D | Negative mass injection (-1M) | ✅ STABLE |
-| **Mach-Infinity** | 2D | 1.8 Quintillion vector magnitude | ✅ STABLE |
-| **Micro-Cavitation** | 2D | Indivisible mass (35) in 1-voxel cage | ✅ STABLE |
-| **Energy Leak** | 2D | 10,000 frame closed-box general audit | ✅ 0% Loss |
-| **OpenStreetMap Mask** | 2D | 5,000 frames over jagged Midtown Manhattan topography | ✅ 0% Loss |
-| **Z-Axis Torsion** | 3D | 2x2x2 rotational vertical shear (Micro-Tornado) | ✅ STABLE |
-| **Ruthless Megacity** | GPU / 2D | 50 Billion Collisions on 497,480 concrete voxels. | ✅ 100% Mass Conservation across 10,000 frames. |
+### 1. Real-World Terrain Ingestion (Phase 26)
+Procedural 80x80 grids have been completely replaced. `osm_terrain_parser.py` grabs the literal live bounding-box coordinates from **OpenStreetMap (Midtown Manhattan)**, ray-casting the physical 3D polygons directly into our discrete integer physics mesh. 
+
+### 2. Live NOAA Aviation Wind Data (Phase 25)
+The engine pulls and vector-averages live API METAR wind observations from JFK and LaGuardia. 
+- Real-world validation: Discovered that previous empirical hardcoded guesses (8mph @ 220 deg) were off by roughly 200 degrees from reality. 
+- Sourced natively in `noaa_wind_client.py` using non-blocking background threads with a 20-min TTL.
+
+### 3. FAA-Standard Turbulence Intensity (Phase 24)
+Arbitrary "chaos" flags were replaced by standard aviation **Turbulence Intensity (TI)** calculations. We use rolling standard-deviation windows across the simulated wind field. If `TI% > 15%` (equivalent to "moderate turbulence" per FAA AC 00-30C), the drone is flagged for immediate rerouting.
+
+### 4. MAVLink / SITL hardware bridging (Phase 23)
+Wind_Navigator sends live physics data straight to ArduPilot via `mavlink_bridge.py`:
+- Predicts turbulence 12 seconds along the flight path.
+- Injects standard MAVLink `STATUSTEXT` warnings.
+- Commands standard-flight `HOLD` and `PROCEED` overrides natively. 
 
 ---
 
-## Project Files
+## Validated Metrics and Benchmarks
 
-| File | Purpose |
-| :--- | :--- |
-| `visualizer_3d.py` | **Phase 11** Real-Time 3D Matplotlib/JSBSim Flight Visualizer. |
-| `jsbsim_bridge.py` | **Phase 11 (Aerodynamics)** Bridge between Wind_Navigator and NASA JSBSim. |
-| `cuda_deterministic_test.cu` | **Phase 10** Deterministic Hash Optimization (RTX 2050 Watchdog Bypass). |
-| `mavlink_bridge.py` | **Phase 9 (Sim2Real)** Link between Wind_Navigator API and PX4 Autopilot. |
-| `cuda_swarm_pathfinder.cu` | **Phase 8** Tests 100,000 independent drone heuristics simultaneously using 2,048 CUDA Cores. |
-| `router_4d_osm.cpp` | **Phase 8** Fuses Live OpenStreetMap architecture with spatial pathfinding. |
-| `router_4d.cpp` | **Phase 8** Space-Time Pathfinder (C++ IoT Target). |
-| `cuda_megacity_engine.cu` | **Phase 7** Parallel RTX Kernel. Dispatches 1,000,000 threads. |
-| `server.py` | **Production Edge API.** FastAPI Web Server for Drone logistics. |
-| `api_physics_core.cpp` | **Production C++ Extractor.** Reads 3D bounds and outputs wind vectors. |
-| `conservative_lbm_3d.cpp` | **Production 3D Engine.** D3Q19 array. |
-| `osm_terrain_parser.py` | OpenStreetMap Overpass API bounding box terrain rasterizer. |
+Every performance claim below has been logged via automated testing (`validate_physics.py`):
+
+| Metric | Validated Result | Code Origin |
+|:-------|:-----------------|:------------|
+| **False-Positive Bifurcation Rate** | **0%** (vs 45.3% in float approximation pipeline) | `VALIDATION_REPORT.md` (Runs against Manhattan geometry) |
+| **Edge-API Response Latency** | **p50=3ms / p95=18ms / p99=30ms at 250 concurrent queries.** | `server.py` |
+| **Compute Speed Improvement** | **1.91× faster** than floating-point math | `validate_physics.py` benchmark iteration |
+| **Determinism Guarantee** | **100% (0 drift failures across 1,000 runs)** | Pure integer grid in `rational_wind.py` |
+
+*(Previously stated claims of "sub-15ms response" have been precisely updated above to reflect true concurrent probability distribution boundaries.)*
+
+---
+
+## File Architecture
+
+| Component | Responsibility |
+|:----------|:---------------|
+| `panda_manhattan.py` | The live 3D visualizer running the simulation engine alongside the 3D models. |
+| `noaa_wind_client.py`| Live API consumption from `aviationweather.gov`. |
+| `osm_terrain_parser.py`| NYC OpenStreetMap topology extractor and integer grid ray-caster. |
+| `rational_wind.py`   | The core integer cross-product mathematics isolating building saddle points. |
+| `turbulence_metrics.py`| Rolling standard deviation logic conforming to FAA TI% thresholds. |
+| `mavlink_bridge.py`  | SITL hardware connection loop sending actual flight controller commands. |
 
 ---
 
 ## Roadmap
 
-- [x] **Phase 1-9:** Base Engine, API, GPU Tuning, and SITL Validation.
-- [x] **Phase 10:** Deterministic CUDA Hash Optimization (RTX 2050 Watchdog Bypass)
-- [x] **Phase 11:** NASA-Grade Aerodynamic Validation & 3D Visualizer (JSBSim Integration)
-- [x] **Phase 12:** Integer Vortex Memory & Dynamic Systems Core (Limit Cycle Detection)
-- [x] **Phase 13:** Rational Lyapunov Divergence Monitor — Chaos Score = 0 (Lyapunov Stability Proven)
+**Phase 29:** Implement a true LBM D2Q9 flow-streaming sequence with a proper BGK collision operator. (Fixes the geometric anomaly that `dx*dy < 0` ignores 50% of structural corners and 100% of street canyon long-edges).
 
----
-
-## Phase 16: The Destruction Suite — Ruthless Combined Stress Tests
-
-All five Phase 12–15 subsystems tested simultaneously under extreme conditions. File: `stress_suite_phase16.cpp`.
-
-### Critical Rational Trigonometry Correction
-During development, calculus notation (`dvx_dx`, `dvy_dy`) was identified and eliminated. The correct rational integer terminology is:
-- `spread_x = vx[East] - vx[West]` — integer subtraction, no limits
-- `spread_y = vy[North] - vy[South]` — integer subtraction, no limits
-- Saddle condition: `spread_x * spread_y < 0` — integer product sign check
-
-No calculus. No derivatives. No limits. Pure rational arithmetic.
-
-### Test Results (`stress_suite_phase16.cpp`)
-
-| Test | What It Does | Result |
-| :--- | :--- | :--- |
-| **Butterfly Bomb** | +1 unit perturbation in 500×500 grid, 1000 frames | ✅ PASS — Chaos bounded, both vaults unbroken |
-| **Attractor Prison** | Drone locked in period-16 cycle, must phase-escape | ✅ PASS — Escaped using `wait = (weak_phase - entry + period) % period` |
-| **Double Hurricane** | Two mass zones converging from opposite corners | ✅ PASS — No integer overflow, system stable throughout |
-| **Bifurcation Cascade** | Every interior voxel at a saddle point simultaneously | ✅ PASS — Near-100% detection, mass drift = 0 |
-| **1000 Realities** | Monte Carlo: 1000 sims with random ±1 seeds | ✅ PASS — **1000/1000 realities** converged on same dominant route |
-
-**OVERALL: `[PASS] ALL DESTRUCTION TESTS SURVIVED. The engine is INDESTRUCTIBLE.`**
-
----
-
-## License
-
-
-MIT License. See `LICENSE` for details.
-
-
----
-
-## Phase 23 -- Real Hardware Bridge (MAVLink + SITL)
-
-**Status: COMPLETE - 3/3 SITL Tests Passed**
-
-### What was built
-- mavlink_bridge.py: Production MAVLink bridge reading sim predictions at 5Hz
-- sitl_bridge_test.py: Full SITL integration test (ArduCopter v3.3)
-- phase23_sitl_log.json: Machine-readable test evidence
-
-### SITL Results
-| Test | Result | Detail |
-|:---|:---:|:---|
-| Vortex detection (chaos=38) | PASS | danger=38.0, HOLD sent @WP17 (12s ahead) |
-| Clear path (chaos=2) | PASS | danger=0.2, PROCEED sent |
-| Threshold boundary (chaos=20) | PASS | alert triggered at exactly threshold |
-
-### Validated Loop
-`
-Panda3D sim vortex prediction (12s lookahead)
-  -> predict_vortex_ahead()
-  -> MAVLink STATUSTEXT + MAV_CMD_CONDITION_DELAY
-  -> ArduCopter SITL (tcp:127.0.0.1:5760)
-`
-
-### Bugs fixed during Phase 23
-1. DroneKit breaks on Python 3.12 (collections.MutableMapping removed) -- replaced with raw pymavlink
-2. Unicode box-drawing chars (U+2500) crash Windows cp1252 stdout -- replaced with ASCII dashes
-
-### To run against real hardware
-`bash
-python mavlink_bridge.py --connect COM5 --baud 57600   # USB telemetry radio
-python mavlink_bridge.py --connect udp:192.168.1.x:14550  # UDP / Mission Planner
-`
-
-See PHASE_23_OBSERVATIONS.md for full timing analysis and connection guide.
+**Phase 30:** Implement Spatial Partitioning for O(N) swarm collision avoidance, replacing the brute force O(N²) approach currently limiting horizontal scale.

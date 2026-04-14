@@ -117,3 +117,24 @@ The original claim was directionally correct but the metric was wrong.
 
 Phase 22 — Swarm Intelligence: deploy 3 drones simultaneously using the
 validated rational wind model, with CUDA-accelerated swarm pathfinding.
+============================================================
+WIND_NAVIGATOR -- External CFD Ground Truth Validation
+============================================================
+
+[TEST 1] Surface-Mounted Prism Corners (Horseshoe Vortex)
+CFD Literature: Peak separation shears occur at the 4 topological corners.
+  -> Predicted Vortex Locations: Corners=2/4, Edges=0
+  -> RESULT: PARTIAL FAIL. Math catches (3,6) and (6,3) where signs differ, but misses (3,3) and (6,6) where dx and dy have the same sign (either both + or both -).
+  -> CONCLUSION: `dx * dy < 0` is geometrically blind to 50% of building corners!
+
+[TEST 2] Urban Street Canyon Wake (Skimming Flow)
+CFD Literature: Vortex sheer detaches at the roof edges bounding the canyon.
+  -> Canyon Wake / Corner Separations Detected: 0
+  -> RESULT: FAIL. `dx*dy < 0` misses straight 1D shear boundaries completely, because either dx or dy is 0 on a straight wall, making the product exactly 0 (not < 0).
+
+[CONCLUSION]
+External CFD Validation exposes fundamental flaws in the 'Rational Trigonometry' proxy.
+1. It misses 50% of building corners (where gradient signs match).
+2. It misses 100% of street canyon long-edges (where one gradient is 0).
+Gap B2 & B3 closed: Validation complete. Phase 29 (Real LBM Streaming) is mathematically mandatory.
+============================================================
