@@ -31,7 +31,7 @@ def fetch_osm_data(query):
     url = "http://overpass-api.de/api/interpreter"
     data = {"data": query}
     data_encoded = urllib.parse.urlencode(data).encode('utf-8')
-    req = urllib.request.Request(url, data=data_encoded)
+    req = urllib.request.Request(url, data=data_encoded, headers={'User-Agent': 'WindNavigator-SITL/1.0 (contact@opensource.org)'})
     
     # We use basic urllib to avoid requiring external pip installs like 'requests'
     with urllib.request.urlopen(req) as response:
