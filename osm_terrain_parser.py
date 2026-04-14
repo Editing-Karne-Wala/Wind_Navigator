@@ -14,13 +14,13 @@ LON_MAX = -73.980
 GRID_WIDTH = 80
 GRID_DEPTH = 80 # Represents the Y-axis on a traditional map
 
-def build_overpass_query():
+def build_overpass_query(lat_min, lon_min, lat_max, lon_max):
     # The Overpass API query fetches building footprints (polygons) and their metadata
     query = f"""
     [out:json][timeout:25];
     (
-      way["building"]({LAT_MIN},{LON_MIN},{LAT_MAX},{LON_MAX});
-      relation["building"]({LAT_MIN},{LON_MIN},{LAT_MAX},{LON_MAX});
+      way["building"]({lat_min},{lon_min},{lat_max},{lon_max});
+      relation["building"]({lat_min},{lon_min},{lat_max},{lon_max});
     );
     out geom;
     """
@@ -28,7 +28,7 @@ def build_overpass_query():
 
 def fetch_osm_data(query):
     print("[OSM] Querying OpenStreetMap Overpass API for real-world geometry...")
-    url = "http://overpass-api.de/api/interpreter"
+    url = "https://lz4.overpass-api.de/api/interpreter"
     data = {"data": query}
     data_encoded = urllib.parse.urlencode(data).encode('utf-8')
     req = urllib.request.Request(url, data=data_encoded, headers={'User-Agent': 'WindNavigator-SITL/1.0 (contact@opensource.org)'})
@@ -87,20 +87,20 @@ def process_buildings(osm_data):
             
     return buildings
 
-def rasterize_terrain(buildings):
+def rasterize_terrain(buildings, lat_min, lon_min, lat_max, lon_max):
     print(f"[OSM] Rasterizing {len(buildings)} building polygons into a {GRID_WIDTH}x{GRID_DEPTH} Voxel Mask...")
     
     # Initialize a flat 2D grid containing the maximum height at that coordinate
     terrain_grid = [[0.0 for _ in range(GRID_WIDTH)] for _ in range(GRID_DEPTH)]
     
-    lon_range = LON_MAX - LON_MIN
-    lat_range = LAT_MAX - LAT_MIN
+    lon_range = lon_max - lon_min
+    lat_range = lat_max - lat_min
     
     # Sweep the area
     for y in range(GRID_DEPTH):
-        current_lat = LAT_MIN + (y / float(GRID_DEPTH - 1)) * lat_range
+        current_lat = lat_min + (y / float(GRID_DEPTH - 1)) * lat_range
         for x in range(GRID_WIDTH):
-            current_lon = LON_MIN + (x / float(GRID_WIDTH - 1)) * lon_range
+            current_lon = lon_min + (x / float(GRID_WIDTH - 1)) * lon_range
             
             # Check if this grid coordinate falls inside any building's footprint
             max_h = 0.0

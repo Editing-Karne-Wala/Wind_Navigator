@@ -20,7 +20,7 @@ from osm_terrain_parser import build_overpass_query, fetch_osm_data, process_bui
 from lbm_d2q9_core import IntegerLBM
 from continuous_vorticity import compute_vorticity
 
-def generate_validation_report(log_data, terrain_grid, vorticity_map, W, H, SCALE_M=5.0):
+def generate_validation_report(log_data, terrain_grid, vorticity_map, W, H, lat_min, lat_max, lon_min, lon_max, SCALE_M=5.0):
     print("\n" + "="*70)
     print("   [ SITL CASE STUDY: PREDICTION vs REALITY VALIDATION ]   ")
     print("="*70)
@@ -35,28 +35,32 @@ def generate_validation_report(log_data, terrain_grid, vorticity_map, W, H, SCAL
     safe_matches = 0
 
     results = []
+    
+    lat_range = lat_max - lat_min
+    lon_range = lon_max - lon_min
+
+    tp = 0 # True Positive: Drone spiked, engine predicted high sheer
+    tn = 0 # True Negative: Drone safe, engine predicted low sheer
+    fp = 0 # False Positive: Drone safe, engine predicted high sheer
+    fn = 0 # False Negative: Drone spiked, engine predicted low sheer
 
     for trace in log_data['flight_trace']:
-        lat_ratio = (trace['lat'] - 40.752) / (40.756 - 40.752)
-        lon_ratio = (trace['lon'] - -73.985) / (-73.980 - -73.985)
+        lat_ratio = (trace['lat'] - lat_min) / lat_range if lat_range else 0.5
+        lon_ratio = (trace['lon'] - lon_min) / lon_range if lon_range else 0.5
         
         y = max(0, min(H-1, int(lat_ratio * (H-1))))
         x = max(0, min(W-1, int(lon_ratio * (W-1))))
         
-        # Poll our D2Q9 Engine's calculated sheer at this exact GPS point
         predicted_shear = vorticity_map[y][x]
         
-        # Reality vs Prediction Logic
         drone_experienced_anomaly = trace['motor_rpm_spike'] or abs(trace['recorded_pitch_deg']) > 15.0
-        we_predicted_anomaly = predicted_shear > 800  # Threshold map for danger
+        we_predicted_anomaly = predicted_shear > 800  
         
-        if drone_experienced_anomaly:
-            total_anomalies += 1
-            if we_predicted_anomaly: matches += 1
-        else:
-            total_safe += 1
-            if not we_predicted_anomaly: safe_matches += 1
-            
+        if drone_experienced_anomaly and we_predicted_anomaly: tp += 1
+        elif not drone_experienced_anomaly and not we_predicted_anomaly: tn += 1
+        elif not drone_experienced_anomaly and we_predicted_anomaly: fp += 1
+        elif drone_experienced_anomaly and not we_predicted_anomaly: fn += 1
+        
         status = "[MATCH]" if (drone_experienced_anomaly == we_predicted_anomaly) else "[FAIL]"
         
         results.append(
@@ -64,46 +68,44 @@ def generate_validation_report(log_data, terrain_grid, vorticity_map, W, H, SCAL
             f"Pilot Pitch: {trace['recorded_pitch_deg']:5.1f}° | RPM Spike: {str(trace['motor_rpm_spike']):<5} | "
             f"Sim D2Q9 Sheer: {predicted_shear:5d} -> {status}"
         )
-        print(results[-1])
 
     print("-" * 70)
-    accuracy = ((matches + safe_matches) / len(log_data['flight_trace'])) * 100
-    print(f"SITL Validation Accuracy: {accuracy:.1f}%")
-    if accuracy == 100.0:
-        print("CONCLUSION: Engine precisely mapped the blind urban canyon vortex!")
-        print("            A* Navigator would have successfully avoided this crash.")
+    total = len(log_data['flight_trace'])
+    accuracy = ((tp + tn) / total) * 100
+    precision = (tp / (tp + fp)) * 100 if (tp + fp) > 0 else 0
+    recall = (tp / (tp + fn)) * 100 if (tp + fn) > 0 else 0
+    
+    print(f"SITL Validation Accuracy : {accuracy:.1f}%")
+    print(f"Total Frames Analyzed    : {total}")
+    print(f"--- CONFUSION MATRIX ---")
+    print(f"True Positives (Caught Crash)  : {tp}")
+    print(f"False Positives (Cried Wolf)   : {fp}")
+    print(f"True Negatives (Correct Safe)  : {tn}")
+    print(f"False Negatives (Missed Crash) : {fn}")
+    print(f"Recall (Anomaly Catch Rate)    : {recall:.1f}%")
     print("="*70)
     
     return results, accuracy
 
 def run_sitl_analysis():
     print("[*] Loading Flight Telemetry...")
-    with open("case_study_data.json", "r") as f:
+    with open("real_case_study.json", "r") as f:
         log_data = json.load(f)
         
-    print(f"[*] Fetching Historical/Live Manhattan OSM Terrain...")
+    trace_lats = [t['lat'] for t in log_data['flight_trace']]
+    trace_lons = [t['lon'] for t in log_data['flight_trace']]
+    lat_min, lat_max = min(trace_lats) - 0.002, max(trace_lats) + 0.002
+    lon_min, lon_max = min(trace_lons) - 0.002, max(trace_lons) + 0.002
+        
+    print(f"[*] Fetching Geographic Geometry for LAT [{lat_min:.4f}, {lat_max:.4f}], LON [{lon_min:.4f}, {lon_max:.4f}]...")
     try:
-        buildings = process_buildings(fetch_osm_data(build_overpass_query()))
-        terrain_grid = rasterize_terrain(buildings)
+        buildings = process_buildings(fetch_osm_data(build_overpass_query(lat_min, lon_min, lat_max, lon_max)))
+        terrain_grid = rasterize_terrain(buildings, lat_min, lon_min, lat_max, lon_max)
     except Exception as e:
-        print("[!] OSM API rate-limited. Falling back to genuine Midtown terrain cache...")
-        terrain_grid = []
-        try:
-            with open("urban_terrain.txt", "r") as f:
-                tokens = f.read().split()
-                w, h = int(tokens[0]), int(tokens[1])
-                idx = 2
-                for y in range(h):
-                    row = []
-                    for x in range(w):
-                        row.append(float(tokens[idx]))
-                        idx += 1
-                    terrain_grid.append(row)
-        except:
-            print("[!] Cache missing! Injecting synthetic block as last resort...")
-            terrain_grid = [[0.0]*80 for _ in range(80)]
-            for y in range(30, 60):
-                for x in range(30, 45): terrain_grid[y][x] = 50.0
+        print(f"[!] OSM API rate-limited ({e}). Injecting synthetic grid for debug...")
+        terrain_grid = [[0.0]*80 for _ in range(80)]
+        for y in range(30, 60):
+            for x in range(30, 45): terrain_grid[y][x] = 50.0
             
     W, H = len(terrain_grid[0]), len(terrain_grid)
     
@@ -125,17 +127,10 @@ def run_sitl_analysis():
     u_map, v_map = lbm.get_velocity_field()
     vorticity_map = compute_vorticity(u_map, v_map, W, H)
     
-    # Map the JSON flight log trace to exactly intersect the real aerodynamic sheer 
-    # pockets identified by the fluid dynamics engine over the real Midtown layout.
-    log_data['flight_trace'] = [
-        {"time_sec": 0, "lat": 40.7535, "lon": -73.9805, "recorded_pitch_deg": -5.1, "motor_rpm_spike": False}, # x=71, sheer=240
-        {"time_sec": 5, "lat": 40.7535, "lon": -73.9810, "recorded_pitch_deg": -5.2, "motor_rpm_spike": False}, # x=63, sheer=519
-        {"time_sec": 10, "lat": 40.7535, "lon": -73.9815, "recorded_pitch_deg": -6.1, "motor_rpm_spike": False}, # x=55, sheer=367
-        {"time_sec": 15, "lat": 40.7535, "lon": -73.9845, "recorded_pitch_deg": -22.1, "motor_rpm_spike": True}, # x=07, sheer=2608!
-        {"time_sec": 20, "lat": 40.7535, "lon": -73.9847, "recorded_pitch_deg": -5.0, "motor_rpm_spike": False}  # Recovery
-    ]
+    # The external log_data['flight_trace'] is left completely untouched.
     
-    results, acc = generate_validation_report(log_data, terrain_grid, vorticity_map, W, H)
+    # Evaluate the real-world traces objectively against the fluid engine
+    results, acc = generate_validation_report(log_data, terrain_grid, vorticity_map, W, H, lat_min, lat_max, lon_min, lon_max)
     
     # Build Artifact
     artifact = f"""# SITL Flight Log Validation Case Study

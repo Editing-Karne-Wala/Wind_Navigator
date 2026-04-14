@@ -29,7 +29,7 @@ from fetch_weather import fetch_weather
 BASE_DIR        = Path(__file__).parent
 SIM_STATE_FILE  = BASE_DIR / "sim_state.json"
 INDEX_HTML      = BASE_DIR / "index.html"
-MOLTBOOK_KEY    = "moltbook_sk_PjAIKn0U9vdhtLr-j7-nFa5l3Y3iCghw"
+MOLTBOOK_KEY    = "moltbook_sk_XeTt85ZNpzkkujRglUbdeGc2VYgmGYpB"
 MOLTBOOK_API    = "https://www.moltbook.com/api/v1"
 
 # ── Load Terrain ──────────────────────────────────────────────────────────────
