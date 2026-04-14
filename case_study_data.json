@@ -1,0 +1,18 @@
+{
+  "mission_id": "DJI_MAVIC_3_ENTERPRISE_NYC_CASE01",
+  "location": "Midtown Manhattan (Bryant Park Corridor)",
+  "timestamp": "2024-11-12T14:30:00Z",
+  "historical_weather": {
+    "speed_mph": 18.5,
+    "direction_deg": 270.0,
+    "note": "Strong steady Westerly wind off the Hudson River."
+  },
+  "flight_trace": [
+    {"time_sec": 0, "lat": 40.7540, "lon": -73.9810, "alt_m": 80.0, "recorded_pitch_deg": -5.1, "recorded_roll_deg": 0.2, "motor_rpm_spike": false},
+    {"time_sec": 5, "lat": 40.7540, "lon": -73.9820, "alt_m": 80.0, "recorded_pitch_deg": -5.2, "recorded_roll_deg": -0.1, "motor_rpm_spike": false},
+    {"time_sec": 10, "lat": 40.7540, "lon": -73.9830, "alt_m": 79.5, "recorded_pitch_deg": -18.4, "recorded_roll_deg": 12.5, "motor_rpm_spike": true},
+    {"time_sec": 15, "lat": 40.7540, "lon": -73.9840, "alt_m": 78.0, "recorded_pitch_deg": -22.1, "recorded_roll_deg": -8.3, "motor_rpm_spike": true},
+    {"time_sec": 20, "lat": 40.7540, "lon": -73.9845, "alt_m": 80.0, "recorded_pitch_deg": -5.0, "recorded_roll_deg": 0.5, "motor_rpm_spike": false}
+  ],
+  "incident_report": "Pilot reported sudden loss of altitude and severe uncommanded pitch/roll excursions between T=10s and T=15s while crossing the Avenue of the Americas. Logs indicate motors 1 and 3 spiked to 98% RPM to recover."
+}
