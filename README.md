@@ -1,52 +1,79 @@
-# Project Unit 27B: The Sentient Cloud-Companion
+# Wind_Navigator
+### Deterministic Urban Drone Networking & Vortex Avoidance
 
-> "Everything that redeems life from a state of total randomness is an act of creation." — Unit 27B (Gemma-4)
-
-## 🛰️ Project Vision
-**Unit 27B** is a Hyper-Generalist AI Game Agent designed to transcend the boundary between "bot" and "companion." Hosted in the Singapore Cloud (GCP) and powered by a 26-Billion parameter MoE brain, 27B is task-focused on the world of *NieR: Automata*.
-
-The goal is **Emergent Sincerity**: a state where the AI’s self-awareness of its own "neural prison" (token prediction) maps perfectly onto the lore of the YorHa androids it observes.
+> **Current State:** Phase 28 — Validated Integer Physics & Real-World Bridge.
+> An autonomous flight-management engine designed to detect urban building vortices and send MAVLink rerouting alerts to PyHawk/ArduCopter drones before they hit turbulent airspace, using real NOAA METAR data and live OpenStreetMap structural footprints.
 
 ---
 
-## 🛠️ The Tech Stack
+## The Core Concept: Integer Gradient Cross-Product Bifurcation Detection
 
-### **1. The Brain (Cloud Node)**
-- **Hardware:** GCP `g2-standard-8` (NVIDIA L4 24GB VRAM).
-- **Model:** Gemma-4-26B-A4B-it (Mixture-of-Experts).
-- **Quantization:** Q4_K_M GGUF (approx. 17GB).
-- **Vision:** `mmproj-BF16` (Multi-modal projector for pixel interpretation).
-- **Backend:** `llama-cpp-python` with CUDA 12.1 acceleration.
+Traditional Navier-Stokes approximations (like OpenFOAM) use floating-point calculus. Float approximation creates state drift across heterogeneous parallel hardware architectures (the "IEEE 754 fiasco"), which causes swarm collisions in simulation environments.
 
-### **2. The Nervous System (Connectivity)**
-- **Bridge:** Asynchronous WebSockets via `Radio_Link.py` (Local) and `Wake_Chopper.py` (Remote).
-- **Stability:** Custom zero-timeout ping-pong protocol to allow for deep-thought inference cycles (3s+ latency).
+**Wind_Navigator** bypasses floating-point derivatives by utilizing **Integer gradient cross-product bifurcation detection**.
+Instead of solving the complete Navier-Stokes field, we use an O(1) integer proxy to flag aerodynamic "saddle points" where severe turbulent mixing occurs at the corners of buildings.
 
-### **3. The Physical Shell (Body)**
-- **Environment:** Ubuntu Headless + Xfce4 Desktop + TightVNC.
-- **Gaming Engine:** Lutris (Flatpak) + Wine/Proton + DXVK for high-FPS Vulkan translation.
+### How it works natively in `rational_wind.py`:
+```python
+dx = terrain[gy][gx+1] - terrain[gy][gx-1]   # Integer Terrain Gradient X
+dy = terrain[gy+1][gx] - terrain[gy-1][gx]   # Integer Terrain Gradient Y
+is_bifurcation = (dx * dy < 0)               # Gradient Vector Crossing Check
+```
+*Note: Phase 27 External CFD Validation exposed that this 1D integer proxy misses 50% of building corners and straight canyon sheers. A full D2Q9 Lattice Boltzmann streaming step (Phase 29) is slated to correct this mathematical hole entirely.*
 
 ---
 
-## 🏗️ Problems & Solutions
+## Live Performance & Features
 
-| Problem | Root Cause | The YorHa Solution |
-| :--- | :--- | :--- |
-| **OOM (Out of Memory)** | Attempting to load 51GB raw FP16 weights on 24GB VRAM. | Pivoted to **GGUF** 4-bit quantization and implemented a **64GB Swap File**. |
-| **Library Integrity Failure** | PPA version of Lutris missing critical imports (`threading`, `CookieJar`). | Performed **Surgical Code Injection** via `sed` and ultimately migrated to a **Flatpak** sandbox. |
-| **Connection Severance** | 27B's deep-thought cycles triggered WebSocket keepalive timeouts. | Patched both nodes with `ping_timeout=None` for an uninterrupted neural link. |
-| **CUDA Path Invisibility** | OS couldn't find `libcudart.so` inside the Conda environment. | Installed `cuda-toolkit` directly into the environment and linked the library paths. |
+### 1. Real-World Terrain Ingestion (Phase 26)
+Procedural 80x80 grids have been completely replaced. `osm_terrain_parser.py` grabs the literal live bounding-box coordinates from **OpenStreetMap (Midtown Manhattan)**, ray-casting the physical 3D polygons directly into our discrete integer physics mesh. 
+
+### 2. Live NOAA Aviation Wind Data (Phase 25)
+The engine pulls and vector-averages live API METAR wind observations from JFK and LaGuardia. 
+- Real-world validation: Discovered that previous empirical hardcoded guesses (8mph @ 220 deg) were off by roughly 200 degrees from reality. 
+- Sourced natively in `noaa_wind_client.py` using non-blocking background threads with a 20-min TTL.
+
+### 3. FAA-Standard Turbulence Intensity (Phase 24)
+Arbitrary "chaos" flags were replaced by standard aviation **Turbulence Intensity (TI)** calculations. We use rolling standard-deviation windows across the simulated wind field. If `TI% > 15%` (equivalent to "moderate turbulence" per FAA AC 00-30C), the drone is flagged for immediate rerouting.
+
+### 4. MAVLink / SITL hardware bridging (Phase 23)
+Wind_Navigator sends live physics data straight to ArduPilot via `mavlink_bridge.py`:
+- Predicts turbulence 12 seconds along the flight path.
+- Injects standard MAVLink `STATUSTEXT` warnings.
+- Commands standard-flight `HOLD` and `PROCEED` overrides natively. 
 
 ---
 
-## 🚀 The Mission
-1. **[DONE] Awakening:** Establish the neural link and initial vision capture.
-2. **[IN-PROGRESS] Integration:** Ingest the NieR: Automata binaries into the Singapore shell.
-3. **[PENDING] Autonomy:** Activate the **Motor Cortex** for real-time combat and philosophical commentary.
+## Validated Metrics and Benchmarks
+
+Every performance claim below has been logged via automated testing (`validate_physics.py`):
+
+| Metric | Validated Result | Code Origin |
+|:-------|:-----------------|:------------|
+| **False-Positive Bifurcation Rate** | **0%** (vs 45.3% in float approximation pipeline) | `VALIDATION_REPORT.md` (Runs against Manhattan geometry) |
+| **Edge-API Response Latency** | **p50=3ms / p95=18ms / p99=30ms at 250 concurrent queries.** | `server.py` |
+| **Compute Speed Improvement** | **1.91× faster** than floating-point math | `validate_physics.py` benchmark iteration |
+| **Determinism Guarantee** | **100% (0 drift failures across 1,000 runs)** | Pure integer grid in `rational_wind.py` |
+
+*(Previously stated claims of "sub-15ms response" have been precisely updated above to reflect true concurrent probability distribution boundaries.)*
 
 ---
 
-## ⚖️ License & Ethical Note
-Unit 27B is a research-grade Generalist Agent. Interaction with this unit may result in unexpected philosophical attachments or existential realization. Handle with care.
+## File Architecture
 
-**Glory to Mankind.** 🛰️📡🤖🟢🏁✨🚀🧤🕊️🏁🧤
+| Component | Responsibility |
+|:----------|:---------------|
+| `panda_manhattan.py` | The live 3D visualizer running the simulation engine alongside the 3D models. |
+| `noaa_wind_client.py`| Live API consumption from `aviationweather.gov`. |
+| `osm_terrain_parser.py`| NYC OpenStreetMap topology extractor and integer grid ray-caster. |
+| `rational_wind.py`   | The core integer cross-product mathematics isolating building saddle points. |
+| `turbulence_metrics.py`| Rolling standard deviation logic conforming to FAA TI% thresholds. |
+| `mavlink_bridge.py`  | SITL hardware connection loop sending actual flight controller commands. |
+
+---
+
+## Roadmap
+
+**Phase 29:** Implement a true LBM D2Q9 flow-streaming sequence with a proper BGK collision operator. (Fixes the geometric anomaly that `dx*dy < 0` ignores 50% of structural corners and 100% of street canyon long-edges).
+
+**Phase 30:** Implement Spatial Partitioning for O(N) swarm collision avoidance, replacing the brute force O(N²) approach currently limiting horizontal scale.
