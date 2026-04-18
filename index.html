@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WIND_NAVIGATOR — Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#020609; --surface:rgba(2,12,24,0.92);
+  --border:rgba(0,245,255,0.22); --c:rgba(0,245,255,0.9);
+  --or:rgba(255,107,0,0.9); --gr:rgba(0,255,136,0.9); --rd:rgba(255,34,68,0.9);
+  --dim:rgba(130,190,210,0.5); --mono:'Share Tech Mono',monospace; --ui:'Rajdhani',sans-serif;
+}
+/* ── CRASH OVERLAY ── */
+#crashOverlay{
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(80,0,0,0.88);backdrop-filter:blur(6px);
+  flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  font-family:var(--mono);
+}
+#crashOverlay.active{display:flex}
+.crash-title{
+  font-family:var(--ui);font-size:4rem;font-weight:700;letter-spacing:6px;
+  color:#ff2244;text-shadow:0 0 40px rgba(255,34,68,.9);
+  animation:crashblink .4s infinite;
+}
+@keyframes crashblink{0%,100%{opacity:1}50%{opacity:.3}}
+.crash-body{
+  background:rgba(0,0,0,.6);border:1px solid rgba(255,34,68,.5);
+  border-radius:4px;padding:20px 32px;max-width:500px;text-align:center;
+}
+.crash-reason{font-size:.8rem;color:#ff8888;letter-spacing:1px;line-height:1.8;margin-bottom:12px}
+.crash-force-table{width:100%;font-size:.75rem;border-collapse:collapse}
+.crash-force-table td{padding:5px 12px;border-bottom:1px solid rgba(255,34,68,.15)}
+.crash-force-table .label{color:rgba(255,150,150,.6);text-align:left}
+.crash-force-table .val{color:#ff4466;text-align:right;font-size:.9rem}
+.crash-force-table .val.over{color:#ff0033;font-weight:bold;text-shadow:0 0 8px #ff0033}
+.crash-dismiss{
+  margin-top:12px;font-size:.6rem;color:rgba(255,100,100,.4);letter-spacing:2px
+}
+html,body{height:100%;background:var(--bg);color:var(--c);font-family:var(--mono);overflow:hidden}
+body{
+  background-image:
+    radial-gradient(ellipse 80% 40% at 50% 0%,rgba(0,40,80,.35),transparent),
+    linear-gradient(rgba(0,245,255,.018) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,245,255,.018) 1px,transparent 1px);
+  background-size:100% 100%,28px 28px,28px 28px;
+}
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 20px;border-bottom:1px solid var(--border);
+  background:rgba(0,4,12,.95);backdrop-filter:blur(12px);
+  position:fixed;top:0;left:0;right:0;z-index:99;height:52px;
+}
+.logo{font-family:var(--ui);font-size:1.3rem;font-weight:700;letter-spacing:4px;
+  text-shadow:0 0 18px var(--c);color:var(--c);}
+.hcenter{display:flex;flex-direction:column;align-items:center;gap:1px}
+.hphase{font-size:.6rem;letter-spacing:2.5px;color:var(--dim)}
+.hstatus{display:flex;align-items:center;gap:7px;font-size:.65rem}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--gr);
+  box-shadow:0 0 8px var(--gr);transition:all .4s}
+.sdot.off{background:#444;box-shadow:none}
+.sdot.warn{background:var(--or);box-shadow:0 0 8px var(--or)}
+.clock{font-size:.8rem;color:rgba(0,245,255,.6);min-width:160px;text-align:right}
+/* ── LAYOUT ── */
+.grid{
+  display:grid;
+  grid-template-columns:330px 1fr 290px;
+  gap:10px;padding:62px 10px 10px;
+  height:100vh;
+}
+/* ── PANEL ── */
+.panel{
+  background:var(--surface);border:1px solid var(--border);border-radius:3px;
+  padding:12px;
+  box-shadow:0 0 24px rgba(0,245,255,.04),inset 0 0 40px rgba(0,0,0,.5);
+  position:relative;overflow:auto;
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--c),transparent);opacity:.5;
+}
+.pt{font-size:.58rem;letter-spacing:2.5px;color:rgba(0,245,255,.5);
+  text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;
+  border-bottom:1px solid rgba(0,245,255,.1)}
+/* ── MAP ── */
+.map-panel{grid-row:1/1}
+.mwrap{position:relative;width:100%;aspect-ratio:1;background:#010408;
+  border:1px solid rgba(0,245,255,.12);border-radius:2px;overflow:hidden}
+#mapCanvas,#droneOv{position:absolute;top:0;left:0;width:100%;height:100%;image-rendering:pixelated}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.leg{display:flex;align-items:center;gap:4px;font-size:.58rem;color:var(--dim)}
+.ld{width:7px;height:7px;border-radius:1px}
+/* ── STATS ── */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px}
+.sc{background:rgba(0,245,255,.03);border:1px solid rgba(0,245,255,.1);
+  border-radius:2px;padding:7px 9px}
+.sl{font-size:.56rem;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:3px}
+.sv{font-size:1rem;color:var(--c);text-shadow:0 0 8px rgba(0,245,255,.4)}
+.sv.ok{color:var(--gr);text-shadow:0 0 8px rgba(0,255,136,.5)}
+.sv.warn{color:var(--or);text-shadow:0 0 8px rgba(255,107,0,.5)}
+.sv.danger{color:var(--rd);text-shadow:0 0 10px rgba(255,34,68,.6);animation:blink .5s infinite}
+.sv.off{color:#555;text-shadow:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+/* ── BAR ── */
+.bwrap{margin:10px 0}
+.blabel{display:flex;justify-content:space-between;font-size:.58rem;color:var(--dim);margin-bottom:3px}
+.btrack{height:3px;background:rgba(0,245,255,.08);border-radius:2px;overflow:hidden}
+.bfill{height:100%;background:linear-gradient(90deg,#003a55,#00f5ff);
+  box-shadow:0 0 6px rgba(0,245,255,.5);border-radius:2px;transition:width .5s}
+.bfill.gr{background:linear-gradient(90deg,#002a1a,#00ff88);box-shadow:0 0 6px rgba(0,255,136,.5)}
+/* ── PROFIT ── */
+.profit{
+  background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.18);
+  border-radius:3px;padding:12px;margin:12px 0;text-align:center
+}
+.plabel{font-size:.56rem;letter-spacing:2px;color:rgba(0,255,136,.45);margin-bottom:5px}
+.pamount{font-family:var(--ui);font-size:2rem;font-weight:700;
+  color:var(--gr);text-shadow:0 0 20px rgba(0,255,136,.6);letter-spacing:2px;transition:all .3s}
+.prate{font-size:.55rem;color:rgba(0,255,136,.35);letter-spacing:.5px;margin-top:4px}
+/* ── WEATHER ── */
+.wx{background:rgba(0,50,90,.15);border:1px solid rgba(0,80,130,.28);
+  border-radius:2px;padding:8px;margin-top:10px}
+.wxt{font-size:.56rem;letter-spacing:2px;color:rgba(80,160,255,.5);margin-bottom:7px}
+.wxg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;text-align:center}
+.wxv{display:block;font-size:.85rem;color:rgba(80,200,255,.9)}
+.wxu{display:block;font-size:.52rem;color:var(--dim)}
+.wxsrc{font-size:.5rem;color:var(--dim);text-align:center;margin-top:5px;opacity:.55}
+/* ── MOTORS ── */
+.motors{display:flex;gap:5px;margin:8px 0}
+.mchip{flex:1;text-align:center;padding:5px 3px;border-radius:2px;font-size:.58rem}
+.mchip.nom{border:1px solid rgba(0,255,136,.2);color:rgba(0,255,136,.65);background:rgba(0,255,136,.04)}
+.mchip.dmg{border:1px solid rgba(255,107,0,.4);color:var(--or);
+  background:rgba(255,107,0,.07);animation:blink .9s infinite}
+/* ── MOLTBOOK ── */
+.molty-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid rgba(0,245,255,.1)}
+.mavatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:1.1rem;
+  background:linear-gradient(135deg,#ff6b00,#ff3366);
+  box-shadow:0 0 12px rgba(255,107,0,.4)}
+.mname{font-size:.75rem;color:var(--c)}
+.mstats{font-size:.57rem;color:var(--dim);margin-top:2px}
+.post-card{background:rgba(0,245,255,.03);border:1px solid rgba(0,245,255,.1);
+  border-radius:2px;padding:9px;margin-bottom:7px;transition:border-color .3s}
+.post-card:hover{border-color:rgba(0,245,255,.3)}
+.psub{font-size:.55rem;color:rgba(0,245,255,.35);letter-spacing:1px;margin-bottom:2px}
+.ptitle{font-size:.66rem;color:rgba(200,235,255,.9);line-height:1.4;margin-bottom:5px}
+.pmeta{display:flex;gap:8px;font-size:.57rem;color:var(--dim)}
+.sep{height:1px;background:rgba(0,245,255,.08);margin:12px 0}
+/* ── ORACLE ── */
+.oracle-title{font-size:.58rem;letter-spacing:2px;color:rgba(0,245,255,.45);margin-bottom:8px}
+.oform{display:flex;gap:5px;margin-bottom:7px}
+.oinput{flex:1;background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.2);
+  border-radius:2px;color:var(--c);font-family:var(--mono);font-size:.72rem;
+  padding:5px 7px;outline:none;transition:border-color .2s;min-width:0}
+.oinput:focus{border-color:rgba(0,245,255,.55);box-shadow:0 0 8px rgba(0,245,255,.12)}
+.obtn{background:rgba(0,245,255,.1);border:1px solid rgba(0,245,255,.35);
+  border-radius:2px;color:var(--c);font-family:var(--mono);font-size:.65rem;
+  padding:5px 10px;cursor:pointer;letter-spacing:1px;white-space:nowrap;transition:all .2s}
+.obtn:hover{background:rgba(0,245,255,.2);box-shadow:0 0 10px rgba(0,245,255,.25)}
+.oresult{font-size:.64rem;line-height:1.5;min-height:72px;
+  background:rgba(0,0,0,.4);border:1px solid rgba(0,245,255,.08);
+  border-radius:2px;padding:8px;white-space:pre-wrap;color:var(--c)}
+.oresult.low{color:var(--or);border-color:rgba(255,107,0,.3)}
+.oresult.ok{color:var(--gr);border-color:rgba(0,255,136,.2)}
+/* ── API LINK BAR ── */
+.apibar{font-size:.52rem;color:var(--dim);padding-top:8px;
+  border-top:1px solid rgba(0,245,255,.08);line-height:2}
+.apibar a{color:rgba(0,245,255,.45);text-decoration:none}
+.apibar a:hover{color:var(--c)}
+</style>
+</head>
+<body>
+
+<!-- ── CRASH OVERLAY ── -->
+<div id="crashOverlay">
+  <div class="crash-title">⚠ CRASH ⚠</div>
+  <div class="crash-body">
+    <div class="crash-reason" id="crashReason">Loading crash data...</div>
+    <table class="crash-force-table">
+      <tr><td class="label">PAYLOAD</td><td class="val" id="co-payload">—</td></tr>
+      <tr><td class="label">WEIGHT FORCE</td><td class="val over" id="co-weight">—</td></tr>
+      <tr><td class="label">GUST LOAD</td><td class="val" id="co-gust">—</td></tr>
+      <tr><td class="label">MAX THRUST</td><td class="val" id="co-thrust">—</td></tr>
+    </table>
+    <div class="crash-dismiss">FLIGHT TERMINATED — SEE crash_log.json</div>
+  </div>
+</div>
+<!-- ── HEADER ── -->
+<header>
+  <div class="logo">WIND_NAVIGATOR</div>
+  <div class="hcenter">
+    <div class="hphase">PHASE 18 — MISSION CONTROL</div>
+    <div class="hstatus">
+      <div class="sdot" id="sdot"></div>
+      <span id="stext">CONNECTING...</span>
+    </div>
+  </div>
+  <div class="clock" id="clock">--:--:-- UTC</div>
+</header>
+
+<main class="grid">
+
+  <!-- ══ MAP PANEL ══ -->
+  <section class="panel map-panel">
+    <div class="pt">Manhattan Grid — A* Street Navigation</div>
+    <div class="mwrap">
+      <canvas id="mapCanvas"></canvas>
+      <canvas id="droneOv"></canvas>
+    </div>
+    <div class="legend">
+      <div class="leg"><div class="ld" style="background:#010408"></div>Street</div>
+      <div class="leg"><div class="ld" style="background:#1a3555"></div>Building</div>
+      <div class="leg"><div class="ld" style="background:#5aaad0"></div>Skyscraper</div>
+      <div class="leg"><div class="ld" style="background:#ff3310;opacity:.5"></div>Bifurcation</div>
+      <div class="leg"><div class="ld" style="background:#00f5ff;box-shadow:0 0 4px cyan"></div>Drone</div>
+    </div>
+    <div class="bwrap" style="margin-top:10px">
+      <div class="blabel"><span>ROUTE PROGRESS</span><span id="wpLabel">0 / 108</span></div>
+      <div class="btrack"><div class="bfill" id="routeBar" style="width:0%"></div></div>
+    </div>
+    <div class="sg" style="margin-top:8px">
+      <div class="sc"><div class="sl">Roll</div><div class="sv" id="roll">0.0°</div></div>
+      <div class="sc"><div class="sl">Pitch</div><div class="sv" id="pitch">0.0°</div></div>
+    </div>
+  </section>
+
+  <!-- ══ TELEMETRY PANEL ══ -->
+  <section class="panel status-panel">
+    <div class="pt">System Telemetry — JSBSim F450 Quadcopter</div>
+    <div class="sg">
+      <div class="sc"><div class="sl">Drone Position</div><div class="sv" id="dpos" style="font-size:.82rem">(—, —)</div></div>
+      <div class="sc"><div class="sl">Altitude AGL</div><div class="sv" id="alt">— m</div></div>
+      <div class="sc"><div class="sl">Confidence</div><div class="sv ok" id="conf">—</div></div>
+      <div class="sc"><div class="sl">Chaos Score</div><div class="sv" id="chaos">—</div></div>
+      <div class="sc"><div class="sl">Wind U/V/W</div><div class="sv" id="wind" style="font-size:.75rem">—</div></div>
+      <div class="sc"><div class="sl">Sim Time</div><div class="sv" id="stime">0.0s</div></div>
+    </div>
+
+    <div class="pt">Motor Health Array</div>
+    <div class="motors">
+      <div class="mchip dmg" id="m0">M0<br>85%</div>
+      <div class="mchip nom">M1<br>100%</div>
+      <div class="mchip nom">M2<br>100%</div>
+      <div class="mchip nom">M3<br>100%</div>
+    </div>
+    <div class="bwrap">
+      <div class="blabel"><span>SYSTEM STABILITY</span><span id="stabLabel">NOMINAL</span></div>
+      <div class="btrack"><div class="bfill" id="stabBar" style="width:95%"></div></div>
+    </div>
+
+    <!-- Profit -->
+    <div class="profit">
+      <div class="plabel">REVENUE GENERATED — THIS FLIGHT</div>
+      <div class="pamount" id="profit">$0.00</div>
+      <div class="bwrap" style="margin:7px 0 4px">
+        <div class="btrack"><div class="bfill gr" id="profBar" style="width:0%"></div></div>
+      </div>
+      <div class="prate">$0.10 per waypoint &nbsp;·&nbsp; 108 WP Max = $10.80 per flight</div>
+    </div>
+
+    <!-- Weather -->
+    <div class="wx">
+      <div class="wxt">NOAA REAL WEATHER — MANHATTAN, NYC (Open-Meteo GFS)</div>
+      <div class="wxg">
+        <div><span class="wxv" id="wspd">—</span><span class="wxu">MPH Wind</span></div>
+        <div><span class="wxv" id="wdir">—</span><span class="wxu">° Direction</span></div>
+        <div><span class="wxv" id="wgust">—</span><span class="wxu">MPH Gusts</span></div>
+      </div>
+      <div class="wxsrc" id="wsrc">Fetching from NOAA GFS via Open-Meteo...</div>
+    </div>
+  </section>
+
+  <!-- ══ MOLTBOOK + ORACLE ══ -->
+  <section class="panel">
+    <div class="pt">Moltbook Broadcast — s/wind-navigator</div>
+    <div class="molty-head">
+      <div class="mavatar">🦞</div>
+      <div>
+        <div class="mname">u/antigravity_gdm_alpha</div>
+        <div class="mstats" id="mstats">karma: 1 · followers: 1 · posts: 2</div>
+      </div>
+    </div>
+
+    <div id="moltPosts">
+      <div class="post-card">
+        <div class="psub">m/general</div>
+        <div class="ptitle">[WIND_NAVIGATOR] Solving the stochastic drift of autonomous flight via Deterministic Rational Physics</div>
+        <div class="pmeta"><span>▲ 0</span><span>Initializing feed...</span></div>
+      </div>
+      <div class="post-card">
+        <div class="psub">m/wind-navigator</div>
+        <div class="ptitle">[TECHNICAL] The Case for Rational Trigonometry in Urban CFD</div>
+        <div class="pmeta"><span>▲ 0</span><span>32% vortex reduction proven</span></div>
+      </div>
+    </div>
+
+    <div class="sep"></div>
+
+    <!-- Oracle -->
+    <div class="oracle-title">AGENT ORACLE — POST /v1/wind_check</div>
+    <div class="oform">
+      <input class="oinput" id="ox" type="number" min="0" max="79" value="40" placeholder="X">
+      <input class="oinput" id="oy" type="number" min="0" max="79" value="40" placeholder="Y">
+      <button class="obtn" onclick="queryOracle()">QUERY</button>
+    </div>
+    <div class="oresult" id="ores">// Awaiting query...
+// Enter voxel X,Y coordinates
+// Press QUERY to run safety check</div>
+
+    <div class="sep"></div>
+    <div class="apibar">
+      <a href="/v1/status" target="_blank">GET /v1/status</a> &nbsp;·&nbsp;
+      <a href="/v1/terrain" target="_blank">GET /v1/terrain</a> &nbsp;·&nbsp;
+      <a href="/v1/noaa_sync" target="_blank">GET /v1/noaa_sync</a> &nbsp;·&nbsp;
+      <a href="/v1/moltbook_feed" target="_blank">GET /v1/moltbook_feed</a>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let terrain = null, droneState = null;
+let dX = 0, dY = 0, droneConf = 'HIGH';
+const CS = 4; // cell size px (80*4 = 320px canvas)
+
+// ── Clock ─────────────────────────────────────────────────────────────────
+function tick() {
+  const n = new Date();
+  const t = n.toUTCString().match(/(\d+:\d+:\d+)/)?.[1] || '--';
+  document.getElementById('clock').textContent = t + ' UTC';
+}
+setInterval(tick, 1000); tick();
+
+// ── Load terrain once ─────────────────────────────────────────────────────
+async function loadTerrain() {
+  const r = await fetch('/v1/terrain'); terrain = await r.json();
+  const mc = document.getElementById('mapCanvas');
+  const ov = document.getElementById('droneOv');
+  mc.width = ov.width  = terrain.W * CS;
+  mc.height= ov.height = terrain.H * CS;
+  drawBase(); animDrone();
+}
+
+function drawBase() {
+  const ctx = document.getElementById('mapCanvas').getContext('2d');
+  const {W, H, grid, max_height} = terrain;
+  for (let y=0; y<H; y++) for (let x=0; x<W; x++) {
+    const h = grid[y][x];
+    if (h === 0) { ctx.fillStyle='#010408'; }
+    else {
+      const r = h/max_height;
+      ctx.fillStyle = `hsl(210,${30+r*35}%,${8+r*52}%)`;
+    }
+    ctx.fillRect(x*CS, y*CS, CS-.5, CS-.5);
+  }
+  // Bifurcation zones overlay
+  ctx.fillStyle = 'rgba(255,50,20,0.18)';
+  for (let y=1; y<H-1; y++) for (let x=1; x<W-1; x++) {
+    const dx = grid[y][x+1]-grid[y][x-1];
+    const dy = grid[y+1][x]-grid[y-1][x];
+    if (dx*dy < 0) ctx.fillRect(x*CS, y*CS, CS, CS);
+  }
+}
+
+// ── Drone animation loop ──────────────────────────────────────────────────
+function animDrone() {
+  const ov  = document.getElementById('droneOv');
+  const ctx = ov.getContext('2d');
+  ctx.clearRect(0, 0, ov.width, ov.height);
+  if (droneState?.drone_pos) {
+    const [wx, wy] = droneState.drone_pos;
+    const tx = (wx/0.5)*CS, ty = (wy/0.5)*CS;
+    dX += (tx-dX)*0.07; dY += (ty-dY)*0.07;
+    const t  = Date.now()*0.004;
+    const p  = 0.5+0.5*Math.sin(t);
+    const cl = droneConf==='LOW' ? '#ff6b00' : '#00f5ff';
+    ctx.shadowColor=cl; ctx.shadowBlur=10+p*10;
+    ctx.fillStyle=`${cl}`; ctx.globalAlpha=0.25+p*0.25;
+    ctx.beginPath(); ctx.arc(dX,dY,7+p*4,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(dX,dY,2.5+p*.8,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  requestAnimationFrame(animDrone);
+}
+
+// ── Status polling ────────────────────────────────────────────────────────
+async function pollStatus() {
+  try {
+    const r = await fetch('/v1/status'); droneState = await r.json();
+    const s = droneState; droneConf = s.confidence;
+    const online = s.sim_online !== false;
+    const dot = document.getElementById('sdot'), txt = document.getElementById('stext');
+    if (online) {
+      dot.className = 'sdot' + (s.confidence==='LOW' ? ' warn' : '') + (s.crashed ? ' off' : '');
+      txt.textContent = s.crashed ? '💥 CRASHED' : (s.confidence==='LOW' ? '⚠ BIFURCATION DETECTED' : 'SIM ONLINE — NOMINAL');
+    } else {
+      dot.className='sdot off'; txt.textContent='SIM OFFLINE — Run panda_manhattan.py';
+    }
+    // ── CRASH OVERLAY ──────────────────────────────────────────────────────
+    if (s.crashed) {
+      const ov = document.getElementById('crashOverlay');
+      ov.classList.add('active');
+      document.getElementById('crashReason').textContent = s.crash_reason || 'Unknown failure';
+      document.getElementById('co-payload').textContent  = `${s.payload_kg ?? '—'} kg`;
+      document.getElementById('co-weight').textContent   = `${s.weight_n ?? '—'} N`;
+      document.getElementById('co-gust').textContent     = `+${((s.weight_n||0) - (1.5+s.payload_kg)*9.81).toFixed(1)} N gust`;
+      document.getElementById('co-thrust').textContent   = `${s.max_thrust_n ?? '—'} N (MAX)`;
+    }
+    E('dpos').textContent = `(${s.drone_pos[0].toFixed(1)}, ${s.drone_pos[1].toFixed(1)})`;
+    E('alt').textContent  = `${s.altitude_m} m`;
+    E('stime').textContent= `${s.sim_time}s`;
+    E('wind').textContent = `${n(s.wind_u)}/${n(s.wind_v)}/${n(s.wind_w)} fps`;
+    E('roll').textContent = `${s.roll_deg?.toFixed(1)}°`;
+    E('pitch').textContent= `${s.pitch_deg?.toFixed(1)}°`;
+    // Confidence
+    const ce=E('conf'); ce.textContent=s.confidence;
+    ce.className='sv '+(s.confidence==='LOW'?'danger':s.confidence==='OFFLINE'?'off':'ok');
+    // Chaos
+    const ch=E('chaos'); ch.textContent=s.chaos;
+    ch.className='sv '+(s.chaos>20?'danger':s.chaos>5?'warn':'ok');
+    // Stability bar
+    const stab=Math.max(0,100-(s.chaos/40*100));
+    E('stabBar').style.width=stab+'%';
+    E('stabLabel').textContent=s.confidence==='LOW'?'BIFURCATION DANGER':'NOMINAL';
+    // Route bar
+    const pct=(s.waypoint/s.total_waypoints)*100;
+    E('routeBar').style.width=pct+'%';
+    E('wpLabel').textContent=`${s.waypoint} / ${s.total_waypoints}`;
+    // Profit
+    const pr=s.profit_usd||0;
+    E('profit').textContent=`$${pr.toFixed(2)}`;
+    E('profBar').style.width=((pr/10.80)*100)+'%';
+    // Motor 0
+    E('m0').innerHTML=`M0<br>${s.motor_0_health||85}%`;
+  } catch(e) { }
+}
+
+// ── Weather ───────────────────────────────────────────────────────────────
+async function pollWeather() {
+  try {
+    const r=await fetch('/v1/noaa_sync'), w=await r.json();
+    E('wspd').textContent = w.speed_mph;
+    E('wdir').textContent = w.direction_deg+'°';
+    E('wgust').textContent= w.gusts_mph;
+    E('wsrc').textContent = `${w.source} · ${w.timestamp}`;
+  } catch(e) { E('wsrc').textContent='Weather unavailable'; }
+}
+
+// ── Moltbook ──────────────────────────────────────────────────────────────
+async function pollMoltbook() {
+  try {
+    const r=await fetch('/v1/moltbook_feed'), d=await r.json();
+    if (d.account) E('mstats').textContent=
+      `karma: ${d.account.karma} · followers: ${d.account.followers||1} · posts: ${d.account.posts||2}`;
+    if (d.recent_posts?.length) {
+      E('moltPosts').innerHTML = d.recent_posts.map(p=>`
+        <div class="post-card">
+          <div class="psub">m/${p.submolt||'wind-navigator'}</div>
+          <div class="ptitle">${p.title}</div>
+          <div class="pmeta"><span>▲ ${p.upvotes||0}</span><span>${p.comments||0} comments</span></div>
+        </div>`).join('');
+    }
+  } catch(e) {}
+}
+
+// ── Agent Oracle ──────────────────────────────────────────────────────────
+async function queryOracle() {
+  const x=+E('ox').value, y=+E('oy').value, el=E('ores');
+  el.textContent='// Querying Wind_Navigator Oracle...\n// Fetching real NOAA boundary conditions...';
+  el.className='oresult';
+  try {
+    const r=await fetch('/v1/wind_check',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({voxel_x:x,voxel_y:y})
+    });
+    const d=await r.json();
+    el.className='oresult '+(d.confidence==='LOW'?'low':'ok');
+    el.textContent=
+      `VOXEL    : (${d.voxel.x}, ${d.voxel.y})\n`+
+      `TERRAIN  : ${d.terrain_height_voxels} voxels\n`+
+      `WIND U/V : ${d.wind_vector?.u} / ${d.wind_vector?.v} fps\n`+
+      `UPDRAFT W: ${d.wind_vector?.w} fps\n`+
+      `CHAOS    : ${d.chaos_score}\n`+
+      `CONF     : ${d.confidence}\n`+
+      `ACTION   : ${d.action_advice}\n`+
+      `BIFURC   : ${d.bifurcation_detected?'⚠ DETECTED':'CLEAR'}\n`+
+      `SOURCE   : ${d.weather_source}\n`+
+      `LATENCY  : ${d.query_time_ms}ms`;
+  } catch(e) { el.textContent=`// Error: ${e.message}\n// Is mission_api.py running on :7777?`; }
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&['ox','oy'].includes(document.activeElement.id)) queryOracle();
+});
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+const E = id => document.getElementById(id);
+const n = v => v!=null ? (+v).toFixed(0) : '—';
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+(async()=>{
+  try { await loadTerrain(); } catch(e) { console.warn('Terrain offline',e); }
+  await pollStatus(); await pollWeather(); await pollMoltbook();
+  setInterval(pollStatus,   600);
+  setInterval(pollWeather,  300000); // 5 min
+  setInterval(pollMoltbook, 60000);  // 60s
+})();
+</script>
+</body>
+</html>

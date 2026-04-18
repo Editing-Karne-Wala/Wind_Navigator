@@ -1,0 +1,121 @@
+{
+  "phase": 23,
+  "timestamp": "2026-04-12T03:48:29.984646+00:00",
+  "sitl_started": true,
+  "vehicle_connected": true,
+  "peak_altitude_m": 0.0,
+  "results": {
+    "passed": 3,
+    "failed": 0,
+    "tests": [
+      {
+        "test": "vortex_detect",
+        "status": "PASS",
+        "danger": 38.0,
+        "wp": 17
+      },
+      {
+        "test": "clear_proceed",
+        "status": "PASS",
+        "danger": 0.2
+      },
+      {
+        "test": "threshold_boundary",
+        "status": "PASS",
+        "danger": 20.0
+      }
+    ]
+  },
+  "log": [
+    {
+      "ts": "2026-04-12T03:47:40.395519+00:00",
+      "level": "INFO",
+      "msg": "Starting ArduCopter SITL (NYC coords: 40.748817, -73.985428)..."
+    },
+    {
+      "ts": "2026-04-12T03:47:40.549323+00:00",
+      "level": "INFO",
+      "msg": "SITL process started | connection: tcp:127.0.0.1:5760"
+    },
+    {
+      "ts": "2026-04-12T03:47:40.549323+00:00",
+      "level": "INFO",
+      "msg": "pymavlink connecting to tcp:127.0.0.1:5760..."
+    },
+    {
+      "ts": "2026-04-12T03:47:40.550296+00:00",
+      "level": "INFO",
+      "msg": "Waiting for heartbeat..."
+    },
+    {
+      "ts": "2026-04-12T03:47:43.176556+00:00",
+      "level": "INFO",
+      "msg": "Heartbeat OK: sys=1 comp=0"
+    },
+    {
+      "ts": "2026-04-12T03:47:43.176556+00:00",
+      "level": "INFO",
+      "msg": "Setting GUIDED mode..."
+    },
+    {
+      "ts": "2026-04-12T03:47:44.177461+00:00",
+      "level": "INFO",
+      "msg": "Arming motors..."
+    },
+    {
+      "ts": "2026-04-12T03:47:54.544585+00:00",
+      "level": "INFO",
+      "msg": "Commanding takeoff to 10m..."
+    },
+    {
+      "ts": "2026-04-12T03:48:26.983554+00:00",
+      "level": "PASS",
+      "msg": "Bridge using LIVE pymavlink connection to SITL"
+    },
+    {
+      "ts": "2026-04-12T03:48:26.983554+00:00",
+      "level": "INFO",
+      "msg": "\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac Test 1: Vortex scenario (chaos=38, LOW confidence) \u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac"
+    },
+    {
+      "ts": "2026-04-12T03:48:26.983554+00:00",
+      "level": "INFO",
+      "msg": "  danger=38.0 | alert=True | lookahead_wp=17"
+    },
+    {
+      "ts": "2026-04-12T03:48:26.983554+00:00",
+      "level": "ACTION",
+      "msg": "  -> Sent HOLD: 'D0 VORTEX 38 @WP17 HOLD'"
+    },
+    {
+      "ts": "2026-04-12T03:48:28.484168+00:00",
+      "level": "INFO",
+      "msg": "\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac Test 2: Clear scenario (chaos=2, HIGH confidence) \u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac"
+    },
+    {
+      "ts": "2026-04-12T03:48:28.484168+00:00",
+      "level": "INFO",
+      "msg": "  danger=0.2 | alert=False"
+    },
+    {
+      "ts": "2026-04-12T03:48:28.484168+00:00",
+      "level": "ACTION",
+      "msg": "  -> Sent PROCEED"
+    },
+    {
+      "ts": "2026-04-12T03:48:29.984646+00:00",
+      "level": "INFO",
+      "msg": "\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac Test 3: Boundary (chaos=20, threshold=20) \u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac"
+    },
+    {
+      "ts": "2026-04-12T03:48:29.984646+00:00",
+      "level": "INFO",
+      "msg": "  danger=20.0 | alert=True | expected=ALERT"
+    },
+    {
+      "ts": "2026-04-12T03:48:29.984646+00:00",
+      "level": "PASS",
+      "msg": "  -> Threshold boundary correct"
+    }
+  ]
+}
