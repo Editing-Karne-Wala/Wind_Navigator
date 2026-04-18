@@ -1,77 +1,33 @@
-# --- WIND_NAVIGATOR PROJECT GITIGNORE ---
+# AI Models (Too large for Git)
+*.gguf
+*.bin
+*.pt
+*.safetensors
+mmproj-BF16.gguf
 
-# Node.js / Web
-node_modules/
-.npm
-package-lock.json
-
-# Gradle / Android / Java
-.gradle/
-.gradle/buildOutputCleanup/cache.properties
-build/
-**/build/
-*.class
-*.jar
-*.war
-*.ear
-.externalNativeBuild/
-.cxx/
-
-# Python
+# Python & Environments
 __pycache__/
 *.py[cod]
 *$py.class
-.venv/
 venv/
-env/
 .env
-.pytest_cache/
-.tox/
+.venv
+env/
+lib/
+lib64/
+bin/
 
-# Compiled Binaries (C++/CUDA)
-*.exe
-*.dll
-*.so
-*.dylib
-*.o
-*.obj
-*.lib
-*.a
-*.pdb
-*.exp
-*.ilk
-*.suo
+# Logs & Telemetry
+*.log
+history/
+radiomeasures/
 
-# Project Specific Executables
-api_physics_core.exe
-conservative_lbm.exe
-conservative_lbm_3d.exe
-cpp_benchmark.exe
-cuda_megacity_engine.exe
-cuda_ruthless_stress.exe
-cuda_swarm_pathfinder.exe
-discrete_fluid.exe
-extreme_stress.exe
-extreme_stress_3d.exe
-lbm.exe
-real_world_2d_test.exe
-router_4d.exe
-router_4d_osm.exe
-stress_tests.exe
-cuda_deterministic_test.exe
-
-# OS / Editor Junk
+# OS/System artifacts
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
-*.swp
-*~
-.project
-.settings/
-.classpath
+.ipynb_checkpoints/
 
-# Logs
-*.log
-*.ulg
-log/
+# Project Specific
+GameFiles/
+Installation/
+Lutris_Downloads/
