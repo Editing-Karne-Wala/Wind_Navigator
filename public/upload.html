@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind_Navigator | Upload Dataflash Log</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0f16;
+            --primary: #00e5ff;
+            --primary-glow: rgba(0, 229, 255, 0.4);
+            --secondary: #6b7280;
+            --success: #10b981;
+            --text-light: #f3f4f6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 229, 255, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.02), transparent 25%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .upload-card {
+            background: var(--glass-bg);
+            border: 1px dashed var(--secondary);
+            border-radius: 20px;
+            padding: 4rem 2rem;
+            width: 100%;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-card.dragover {
+            border-color: var(--primary);
+            background: rgba(0, 229, 255, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            margin: 0 0 1rem 0;
+            font-weight: 600;
+        }
+
+        p {
+            color: var(--secondary);
+            margin-bottom: 2rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        /* Status UI */
+        #status-container {
+            display: none;
+            width: 100%;
+            margin-top: 2rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        .status-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        .status-step.active {
+            color: white;
+        }
+
+        .status-step.done {
+            color: var(--success);
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 12px;
+        }
+
+        .status-step.active .step-icon {
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+
+        .status-step.done .step-icon::after {
+            content: "✓";
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #download-btn {
+            display: none;
+            width: 100%;
+            padding: 1rem;
+            background: var(--success);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            box-sizing: border-box;
+        }
+        
+        #download-btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Wind_<span>Navigator</span></div>
+    </header>
+
+    <main>
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">✓ Payment Successful</div>
+            <h2 style="font-size: 2rem;">Upload Flight Log</h2>
+        </div>
+
+        <div class="upload-card" id="drop-zone">
+            <div class="upload-icon">📄</div>
+            <h2>Drag & Drop .BIN file here</h2>
+            <p>Maximum file size: 500MB</p>
+            
+            <form id="upload-form">
+                <input type="file" id="file-input" accept=".bin,.BIN">
+                <label for="file-input" class="cta-button">Browse Files</label>
+            </form>
+        </div>
+
+        <div id="status-container">
+            <h3 style="margin-top: 0; font-family: 'Outfit';">Analysis Progress</h3>
+            
+            <div class="status-step active" id="step-upload">
+                <div class="step-icon"></div>
+                <span>Uploading Log File...</span>
+            </div>
+            
+            <div class="status-step" id="step-process">
+                <div class="step-icon"></div>
+                <span>Running Wind-Vector Back-Propagation (D2Q9 LBM)</span>
+            </div>
+            
+            <div class="status-step" id="step-report">
+                <div class="step-icon"></div>
+                <span>Generating Forensic PDF Report</span>
+            </div>
+
+            <a href="#" id="download-btn" target="_blank">Download Forensic Report</a>
+        </div>
+    </main>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const statusContainer = document.getElementById('status-container');
+        const downloadBtn = document.getElementById('download-btn');
+
+        // Drag and drop UI
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                handleUpload(fileInput.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleUpload(fileInput.files[0]);
+            }
+        });
+
+        async function handleUpload(file) {
+            // Hide upload box, show status
+            dropZone.style.display = 'none';
+            statusContainer.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                // Upload file
+                const response = await fetch('/upload-log', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.job_id) {
+                    markDone('step-upload');
+                    activateStep('step-process');
+                    
+                    // Start polling
+                    pollJobStatus(data.job_id);
+                } else {
+                    alert(data.error || "Upload failed");
+                }
+            } catch (err) {
+                console.error("Upload error", err);
+                alert("Upload failed. Please try again.");
+            }
+        }
+
+        async function pollJobStatus(jobId) {
+            const pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/job-status/${jobId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'processing') {
+                        // Just checking in, still processing
+                        // We simulate moving from processing to report generation for UI effect
+                        setTimeout(() => {
+                            if(document.getElementById('step-process').classList.contains('active')) {
+                                markDone('step-process');
+                                activateStep('step-report');
+                            }
+                        }, 2000); 
+                    } else if (data.status === 'complete') {
+                        clearInterval(pollInterval);
+                        markDone('step-process');
+                        markDone('step-report');
+                        
+                        downloadBtn.href = data.report_url;
+                        downloadBtn.style.display = 'block';
+                    }
+                } catch (err) {
+                    console.error("Polling error", err);
+                }
+            }, 1000);
+        }
+
+        function activateStep(id) {
+            const step = document.getElementById(id);
+            if(step) step.className = 'status-step active';
+        }
+
+        function markDone(id) {
+            const step = document.getElementById(id);
+            if(step) step.className = 'status-step done';
+        }
+    </script>
+</body>
+</html>
