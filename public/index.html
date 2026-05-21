@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -129,7 +129,7 @@
         }
 
         ul li::before {
-            content: "✓";
+            content: "âœ“";
             color: var(--primary);
             font-weight: bold;
             margin-right: 10px;
@@ -200,18 +200,17 @@
 
     <main>
         <h1>Definitive Answers for Drone Crashes.</h1>
-        <p class="subtitle">Upload your ArduPilot .BIN log. Our Integer LBM physics engine will mathematically prove if urban wind shear caused your crash, or if it was hardware failure. Legally defensible.</p>
+        <p class="subtitle">Upload your ArduPilot .BIN log. Our physics engine will mathematically reconstruct the flight path to verify if localized wind shear caused the crash or if it was a mechanical failure.</p>
 
         <div class="pricing-card">
-            <h3 style="margin: 0; color: var(--primary); font-family: 'Outfit'; font-weight: 600;">Standard Forensic Report</h3>
+            <h3 style="margin: 0; color: var(--primary); font-family: 'Outfit'; font-weight: 600;">Forensic Analysis Report</h3>
             <div class="price">$75 <span>/ report</span></div>
             
             <ul>
-                <li>11-Page PDF Determination</li>
-                <li>D2Q9 Wind-Vector Back-Propagation</li>
-                <li>OpenStreetMap Geometry Ingestion</li>
-                <li>100% Determinism Certificate</li>
-                <li>Delivery within 24 hours</li>
+                <li>Comprehensive 5-Page Forensic PDF</li>
+                <li>360Â° Aerodynamic Wind Analysis</li>
+                <li>2D Urban Geometry Mapping</li>
+                <li>Courtroom-Ready Physics Verification</li>
             </ul>
 
             <form id="checkout-form">
@@ -241,7 +240,7 @@
                 const formData = new FormData();
                 formData.append('email', email);
 
-                const response = await fetch('/create-checkout-session', {
+                const response = await fetch('https://nicklie-wind-navigator-api.hf.space/create-checkout-session', {
                     method: 'POST',
                     body: formData
                 });
@@ -265,3 +264,6 @@
     </script>
 </body>
 </html>
+
+
+
