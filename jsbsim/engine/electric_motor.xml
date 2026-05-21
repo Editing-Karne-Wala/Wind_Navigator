@@ -1,4 +1,0 @@
-<?xml version="1.0"?>
-<electric_engine name="electric_motor">
-    <power unit="WATTS"> 500 </power>
-</electric_engine>
