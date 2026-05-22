@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -166,7 +166,7 @@
         }
 
         .status-step.done .step-icon::after {
-            content: "✓";
+            content: "âœ“";
         }
 
         @keyframes spin {
@@ -200,12 +200,12 @@
 
     <main>
         <div style="text-align: center; margin-bottom: 2rem;">
-            <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">✓ Payment Successful</div>
+            <div style="color: var(--success); font-weight: bold; margin-bottom: 0.5rem;">âœ“ Payment Successful</div>
             <h2 style="font-size: 2rem;">Upload Flight Log</h2>
         </div>
 
         <div class="upload-card" id="drop-zone">
-            <div class="upload-icon">📄</div>
+            <div class="upload-icon">ðŸ“„</div>
             <h2>Drag & Drop .BIN file here</h2>
             <p>Maximum file size: 500MB</p>
             
@@ -319,7 +319,7 @@
                         markDone('step-process');
                         markDone('step-report');
                         
-                        downloadBtn.href = data.report_url;
+                        downloadBtn.href = `https://nicklie-wind-navigator-api.hf.space${data.report_url}`;
                         downloadBtn.style.display = 'block';
                     }
                 } catch (err) {
@@ -340,5 +340,6 @@
     </script>
 </body>
 </html>
+
 
 
