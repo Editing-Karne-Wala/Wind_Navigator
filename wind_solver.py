@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 WIND_NAVIGATOR - Phase 39: Wind Vector Back-Propagation
 =======================================================
@@ -74,7 +74,7 @@ def solve_wind_vector():
     print(f"[*] Geometry Locked: Found {len(anomalies)} crash frames and {len(safe_frames)} safe frames.")
     print("\n" + "="*70)
     print("   [ WIND-VECTOR BACK-PROPAGATION ENGINE ]   ")
-    print("   Sweeping historical aerodynamics 0° to 350°   ")
+    print("   Sweeping historical aerodynamics 0Â° to 350Â°   ")
     print("="*70)
     
     w_speed_mph = 22.5
@@ -113,7 +113,7 @@ def solve_wind_vector():
         recall = (tp / len(anomalies)) * 100 if len(anomalies) > 0 else 0
         accuracy = ((tp + tn) / (len(anomalies) + len(safe_frames))) * 100
         
-        print(f"Wind @ {angle:3d}° | True Positives (Crash Captured): {tp:2d} | Accuracy: {accuracy:5.1f}%")
+        print(f"Wind @ {angle:3d}Â° | True Positives (Crash Captured): {tp:2d} | Accuracy: {accuracy:5.1f}%")
         
         if recall > best_recall:
             best_recall = recall
@@ -123,7 +123,7 @@ def solve_wind_vector():
     print("="*70)
     print(f"[+] BACK-PROPAGATION COMPLETE")
     if best_recall > 0:
-        print(f"=> Mathematical optimum matches Historical Wind Vector: {best_angle}°")
+        print(f"=> Mathematical optimum matches Historical Wind Vector: {best_angle}Â°")
         print(f"=> This angle accounts for {best_recall:.1f}% of the physical trajectory failures.")
         
         # We rewrite the JSON to embed the discovered solution so the primary test passes perfectly
@@ -138,3 +138,4 @@ def solve_wind_vector():
 
 if __name__ == "__main__":
     solve_wind_vector()
+
