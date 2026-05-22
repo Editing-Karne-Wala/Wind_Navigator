@@ -1,4 +1,4 @@
-import os
+﻿import os
 import json
 import uuid
 import datetime
@@ -25,7 +25,7 @@ def generate_telemetry_plot(trace_data):
     for at in anomaly_times:
         plt.axvline(x=at, color='red', alpha=0.3, linestyle='--')
         
-    plt.axhline(y=15, color='darkred', linestyle=':', label='Critical Threshold (15°)')
+    plt.axhline(y=15, color='darkred', linestyle=':', label='Critical Threshold (15Â°)')
     plt.axhline(y=-15, color='darkred', linestyle=':')
     
     plt.title('Attitude Telemetry with Critical Excursions', fontsize=12, pad=15)
@@ -132,7 +132,7 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
     if tp > 0:
         Story.append(Paragraph("DETERMINATION: AERODYNAMIC CONTRIBUTION PROBABLE", styles['DeterminationBox']))
         Story.append(Paragraph(
-            f"Mathematical analysis of 18 ambient wind scenarios confirmed that wind originating from approximately {log_data.get('historical_weather', {}).get('direction_deg', 'Unknown')}° "
+            f"Mathematical analysis of 18 ambient wind scenarios confirmed that wind originating from approximately {log_data.get('historical_weather', {}).get('direction_deg', 'Unknown')}Â° "
             f"produces structural vorticity exceeding critical thresholds at the exact coordinates of the crash. "
             f"These aerodynamic forces are mathematically sufficient to cause the recorded attitude excursion.", styles['BodyTextCustom']))
     else:
@@ -170,10 +170,10 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
     Story.append(Paragraph(
         "To bypass this limitation, Wind_Navigator employs a <b>Wind-Vector Back-Propagation Engine</b>:", styles['BodyTextCustom']))
     
-    Story.append(Paragraph("1. <b>Geometry Ingestion:</b> The exact GPS flight path is extracted from the .BIN log.", styles['BodyTextCustom'], bulletText="•"))
-    Story.append(Paragraph("2. <b>Structural Mapping:</b> Physical building footprints surrounding the flight path are downloaded from OpenStreetMap and rasterized.", styles['BodyTextCustom'], bulletText="•"))
-    Story.append(Paragraph("3. <b>Fluid Dynamics Sweep:</b> A pure-integer Lattice Boltzmann Method (D2Q9) physics engine simulates 18 distinct ambient wind directions (0° to 340°).", styles['BodyTextCustom'], bulletText="•"))
-    Story.append(Paragraph("4. <b>Cross-Referencing:</b> The resulting turbulence maps are overlaid onto the crash coordinates to check for mathematical correlation.", styles['BodyTextCustom'], bulletText="•"))
+    Story.append(Paragraph("1. <b>Geometry Ingestion:</b> The exact GPS flight path is extracted from the .BIN log.", styles['BodyTextCustom'], bulletText="â€¢"))
+    Story.append(Paragraph("2. <b>Structural Mapping:</b> Physical building footprints surrounding the flight path are downloaded from OpenStreetMap and rasterized.", styles['BodyTextCustom'], bulletText="â€¢"))
+    Story.append(Paragraph("3. <b>Fluid Dynamics Sweep:</b> A pure-integer Lattice Boltzmann Method (D2Q9) physics engine simulates 18 distinct ambient wind directions (0Â° to 340Â°).", styles['BodyTextCustom'], bulletText="â€¢"))
+    Story.append(Paragraph("4. <b>Cross-Referencing:</b> The resulting turbulence maps are overlaid onto the crash coordinates to check for mathematical correlation.", styles['BodyTextCustom'], bulletText="â€¢"))
     
     Story.append(Spacer(1, 0.3 * inch))
     Story.append(Paragraph("2.1 Back-Propagation Sweep Results", styles['Heading2']))
@@ -184,7 +184,7 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
         is_match = (tp > 0 and angle == log_data.get('historical_weather', {}).get('direction_deg', -1))
         matched_str = str(tp) if is_match else "0"
         conclusion = "CORRELATION FOUND" if is_match else "No Correlation"
-        bp_data.append([f"{angle}°", matched_str, conclusion])
+        bp_data.append([f"{angle}Â°", matched_str, conclusion])
         
     t2 = Table(bp_data, colWidths=[2*inch, 2.5*inch, 2*inch])
     t2.setStyle(TableStyle([
@@ -239,3 +239,4 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
 
 if __name__ == "__main__":
     generate_report()
+
