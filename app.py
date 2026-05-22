@@ -173,7 +173,7 @@ async def create_checkout_session(email: str = Form(...)):
 
     if not DODO_API_KEY:
         logger.error("DODO_API_KEY secret is missing! Bypassing to upload page for local testing.")
-        return JSONResponse(content={"checkout_url": f"/static/upload.html?session_id=mock_{uuid.uuid4().hex}"})
+        return JSONResponse(content={"checkout_url": f"/upload.html?session_id=mock_{uuid.uuid4().hex}"})
 
     headers = {
         "Authorization": f"Bearer {DODO_API_KEY}",
@@ -185,8 +185,8 @@ async def create_checkout_session(email: str = Form(...)):
         "currency": "USD",
         "product_name": "Wind_Navigator Forensic Report",
         "customer_email": email,
-        "success_url": "https://nicklie-wind-navigator-api.hf.space/static/upload.html",
-        "cancel_url": "https://nicklie-wind-navigator-api.hf.space"
+        "success_url": "https://wind-navigator-in0y4bt9j-abhinavs-projects-2479f8a1.vercel.app/upload.html",
+        "cancel_url": "https://wind-navigator-in0y4bt9j-abhinavs-projects-2479f8a1.vercel.app"
     }
 
     try:
@@ -268,3 +268,4 @@ async def download_report(job_id: str):
 if __name__ == "__main__":
     logger.info("Starting Wind_Navigator Forensic API on http://0.0.0.0:8000")
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
