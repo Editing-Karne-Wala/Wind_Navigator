@@ -16,7 +16,7 @@ import math
 import sys
 
 from osm_terrain_parser import build_overpass_query, fetch_osm_data, process_buildings, rasterize_terrain
-from lbm_d2q9_core import IntegerLBM
+from lbm_d2q9_core import IntegerLBM, W_INT, SCALE
 from continuous_vorticity import compute_vorticity
 
 def solve_wind_vector():
@@ -83,31 +83,55 @@ def solve_wind_vector():
     best_precision = -1.0
     
     # 2. Sweep 360 degrees
-    for angle in range(0, 360, 20):  # Test every 20 degrees
+    for angle in range(0, 360, 45):  # Test every 45 degrees
         u_in = int(math.sin(math.radians(angle)) * w_speed_mph * -200)
         v_in = int(math.cos(math.radians(angle)) * w_speed_mph * -200)
         
         # We must re-init the grid clean for every angle
         lbm = IntegerLBM(W, H, terrain_grid)
         
+        # Initialize domain velocity so wind does not have to slowly propagate from edge
+        for _y in range(H):
+            for _x in range(W):
+                if terrain_grid[_y][_x] == 0:
+                    for i in range(9):
+                        pop = (lbm.rho0 * W_INT[i]) // SCALE
+                        if i in [1, 5, 8]: pop += (u_in * W_INT[i]) // SCALE
+                        if i in [3, 6, 7]: pop -= (u_in * W_INT[i]) // SCALE
+                        if i in [2, 5, 6]: pop += (v_in * W_INT[i]) // SCALE
+                        if i in [4, 7, 8]: pop -= (v_in * W_INT[i]) // SCALE
+                        lbm.f_in[_y][_x][i] = pop
+                        lbm.f_out[_y][_x][i] = pop
+
+        
         # Burn-in frames
-        for _ in range(120):
+        for _ in range(30):
             lbm.simulate_step(tau_omega=120, inlet_u=u_in, inlet_v=v_in)
             
         u_map, v_map = lbm.get_velocity_field()
         vorticity_map = compute_vorticity(u_map, v_map, W, H)
         
-        # Score it
+        # Score it (Spatial Search 5x5)
         tp = 0
         fn = 0
         for (x, y) in anomalies:
-            if vorticity_map[y][x] > 800: tp += 1
+            max_v = 0
+            for dy in range(-2, 3):
+                for dx in range(-2, 3):
+                    if 0 <= y+dy < H and 0 <= x+dx < W:
+                        max_v = max(max_v, vorticity_map[y+dy][x+dx])
+            if max_v > 800: tp += 1
             else: fn += 1
             
         fp = 0
         tn = 0
         for (x, y) in safe_frames:
-            if vorticity_map[y][x] > 800: fp += 1
+            max_v = 0
+            for dy in range(-2, 3):
+                for dx in range(-2, 3):
+                    if 0 <= y+dy < H and 0 <= x+dx < W:
+                        max_v = max(max_v, vorticity_map[y+dy][x+dx])
+            if max_v > 800: fp += 1
             else: tn += 1
             
         recall = (tp / len(anomalies)) * 100 if len(anomalies) > 0 else 0
