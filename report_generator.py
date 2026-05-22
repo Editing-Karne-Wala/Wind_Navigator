@@ -29,8 +29,8 @@ def generate_telemetry_plot(trace_data):
     plt.axhline(y=-15, color='darkred', linestyle=':')
     
     plt.title('Attitude Telemetry with Critical Excursions', fontsize=12, pad=15)
-    plt.xlabel('Time (seconds)', fontsize=10)
-    plt.ylabel('Degrees', fontsize=10)
+    plt.xlabel('Time (seconds)', fontsize=14)
+    plt.ylabel('Degrees', fontsize=14)
     plt.legend(loc='upper right', framealpha=0.9)
     plt.grid(True, linestyle='--', alpha=0.5)
     plt.tight_layout()
@@ -56,6 +56,16 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
             "historical_weather": {"direction_deg": 0}
         }
         trace_data = []
+
+    import hashlib
+    run_hash = hashlib.sha256(json.dumps(log_data).encode()).hexdigest()
+    
+    def add_footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Courier', 8)
+        canvas.setFillColor(colors.gray)
+        canvas.drawString(0.5 * inch, 0.5 * inch, f"Verification ID: {run_hash}")
+        canvas.restoreState()
 
     # Get validation data
     try:
@@ -156,6 +166,25 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
         img = Image(plot_img_path, width=7*inch, height=3.5*inch)
         Story.append(img)
         
+        if trace_data:
+            max_r = max([t['recorded_roll_deg'] for t in trace_data], key=abs)
+            max_p = max([t['recorded_pitch_deg'] for t in trace_data], key=abs)
+            Story.append(Spacer(1, 0.2*inch))
+            Story.append(Paragraph("<b>Raw Peak Excursions:</b>", styles['BodyTextCustom']))
+            peak_data = [
+                ["Max Roll", f"{max_r:.1f} °"],
+                ["Max Pitch", f"{max_p:.1f} °"]
+            ]
+            pt = Table(peak_data, colWidths=[2*inch, 2*inch])
+            pt.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,-1), colors.HexColor('#0a0f16')),
+                ('TEXTCOLOR', (0,0), (-1,-1), colors.whitesmoke),
+                ('ALIGN', (0,0), (-1,-1), 'LEFT'),
+                ('FONTNAME', (0,0), (-1,-1), 'Courier'),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#d1d5db'))
+            ]))
+            Story.append(pt)
+        
     Story.append(PageBreak())
 
     # ==========================================
@@ -218,8 +247,7 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
         "Running this exact flight log through the engine on any hardware architecture will produce the exact "
         "same SHA-256 binary output signature.", styles['BodyTextCustom']))
     
-    # Generate a reproducible hash based on the log contents
-    run_hash = hashlib.sha256(json.dumps(log_data).encode()).hexdigest()
+
     
     Story.append(Spacer(1, 0.4 * inch))
     Story.append(Paragraph(f"<b>Physics Engine SHA-256 Checksum:</b>", styles['BodyTextCustom']))
@@ -229,7 +257,7 @@ def generate_report(log_json_path="real_case_study.json", output_filename="FOREN
     Story.append(Paragraph("<b>End of Report</b>", styles['SubTitlePage']))
 
     # --- Build PDF ---
-    doc.build(Story)
+    doc.build(Story, onFirstPage=add_footer, onLaterPages=add_footer)
     
     # Cleanup temp image
     if plot_img_path and os.path.exists(plot_img_path):
