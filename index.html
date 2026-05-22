@@ -1,0 +1,269 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind_Navigator | Drone Crash Forensic Reports</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0f16;
+            --primary: #00e5ff;
+            --primary-glow: rgba(0, 229, 255, 0.4);
+            --secondary: #6b7280;
+            --text-light: #f3f4f6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 229, 255, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.03), transparent 25%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: white;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--primary);
+            text-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            max-width: 1000px;
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to right, #fff, #a1a1aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: var(--secondary);
+            max-width: 600px;
+            margin-bottom: 3rem;
+            line-height: 1.6;
+        }
+
+        .pricing-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 450px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 30px 50px rgba(0, 229, 255, 0.1);
+            border-color: rgba(0, 229, 255, 0.2);
+        }
+
+        .price {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            color: white;
+            margin: 1rem 0;
+        }
+
+        .price span {
+            font-size: 1rem;
+            color: var(--secondary);
+            font-weight: 400;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        ul li {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            color: #d1d5db;
+        }
+
+        ul li::before {
+            content: "âœ“";
+            color: var(--primary);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .email-input {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .email-input:focus {
+            border-color: var(--primary);
+        }
+
+        .cta-button {
+            display: inline-block;
+            width: 100%;
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: #000;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .cta-button:hover {
+            background: white;
+            box-shadow: 0 0 30px rgba(255,255,255,0.4);
+            transform: scale(1.02);
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0,0,0,0.3);
+            border-radius: 50%;
+            border-top-color: #000;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Wind_<span>Navigator</span></div>
+    </header>
+
+    <main>
+        <h1>Definitive Answers for Drone Crashes.</h1>
+        <p class="subtitle">Upload your ArduPilot .BIN log. Our physics engine will mathematically reconstruct the flight path to verify if localized wind shear caused the crash or if it was a mechanical failure.</p>
+
+        <div class="pricing-card">
+            <h3 style="margin: 0; color: var(--primary); font-family: 'Outfit'; font-weight: 600;">Forensic Analysis Report</h3>
+            <div class="price">$75 <span>/ report</span></div>
+            
+            <ul>
+                <li>Comprehensive 5-Page Forensic PDF</li>
+                <li>360Â° Aerodynamic Wind Analysis</li>
+                <li>2D Urban Geometry Mapping</li>
+                <li>Courtroom-Ready Physics Verification</li>
+            </ul>
+
+            <form id="checkout-form">
+                <input type="email" id="email" class="email-input" placeholder="Enter your email address" required>
+                <button type="submit" class="cta-button" id="submit-btn">
+                    <span id="btn-text">Proceed to Payment</span>
+                    <div class="spinner" id="btn-spinner"></div>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnSpinner = document.getElementById('btn-spinner');
+            const email = document.getElementById('email').value;
+
+            // UI Loading state
+            btn.style.pointerEvents = 'none';
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'block';
+
+            try {
+                const formData = new FormData();
+                formData.append('email', email);
+
+                const response = await fetch('https://nicklie-wind-navigator-api.hf.space/create-checkout-session', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.checkout_url) {
+                    // Redirect to our mock upload page (simulating post-payment redirect)
+                    window.location.href = data.checkout_url;
+                }
+            } catch (err) {
+                console.error("Error creating checkout session", err);
+                alert("Something went wrong. Please try again.");
+                
+                // Reset UI
+                btn.style.pointerEvents = 'auto';
+                btnText.style.display = 'block';
+                btnSpinner.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
