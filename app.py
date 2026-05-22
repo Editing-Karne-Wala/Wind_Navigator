@@ -167,9 +167,12 @@ async def serve_landing_page():
 
 
 @app.post("/create-checkout-session")
-async def create_checkout_session(email: str = Form(...)):
+async def create_checkout_session(request: Request, email: str = Form(...)):
     """Creates a highly secure checkout session using Dodo Payments API."""
     logger.info(f"Payment initiated for: {email}")
+
+    origin = request.headers.get("origin") or request.headers.get("referer") or "https://wind-navigator-in0y4bt9j-abhinavs-projects-2479f8a1.vercel.app"
+    origin = origin.rstrip("/")
 
     if not DODO_API_KEY:
         logger.error("DODO_API_KEY secret is missing! Bypassing to upload page for local testing.")
@@ -185,8 +188,8 @@ async def create_checkout_session(email: str = Form(...)):
         "currency": "USD",
         "product_name": "Wind_Navigator Forensic Report",
         "customer_email": email,
-        "success_url": "https://wind-navigator-in0y4bt9j-abhinavs-projects-2479f8a1.vercel.app/upload.html",
-        "cancel_url": "https://wind-navigator-in0y4bt9j-abhinavs-projects-2479f8a1.vercel.app"
+        "success_url": f"{origin}/upload.html",
+        "cancel_url": f"{origin}"
     }
 
     try:
@@ -264,6 +267,8 @@ async def download_report(job_id: str):
     logger.warning(f"Download attempted for missing report. Job ID: {job_id}")
     return JSONResponse(content={"error": "Report not found or not yet ready"}, status_code=404)
 
+# Mount static files at root so /upload.html works on the Hugging Face host
+app.mount("/", StaticFiles(directory="public", html=True), name="public")
 
 if __name__ == "__main__":
     logger.info("Starting Wind_Navigator Forensic API on http://0.0.0.0:8000")
