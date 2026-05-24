@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy | Wind_Navigator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0f16;
+            --primary: #00e5ff;
+            --primary-glow: rgba(0, 229, 255, 0.4);
+            --secondary: #6b7280;
+            --text-light: #f3f4f6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            background-image: radial-gradient(circle at 15% 50%, rgba(0, 229, 255, 0.08), transparent 25%), radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.03), transparent 25%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: white;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+        .logo span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+        main {
+            flex: 1;
+            padding: 4rem 2rem;
+            max-width: 800px;
+            width: 100%;
+            line-height: 1.6;
+        }
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; color: white; }
+        h1 { font-size: 2.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 2rem; }
+        h2 { font-size: 1.5rem; margin-top: 2rem; color: var(--primary); }
+        a { color: var(--primary); }
+        ul { list-style-type: disc; margin-left: 20px; }
+        li { margin-bottom: 10px; }
+        a:hover { text-shadow: 0 0 10px var(--primary-glow); }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="logo">Wind_<span>Navigator</span></a>
+    </header>
+    <main>
+        <h1>Privacy Policy</h1>
+        
+<h2>1. Information We Collect</h2>
+<p>We collect your email address for the sole purpose of delivering your receipt and a secure download link to your forensic report. We also temporarily process the ArduPilot .BIN flight logs you upload.</p>
+
+<h2>2. Data Handling & Retention</h2>
+<p>We understand that enterprise drone logs contain sensitive geographic data. Your uploaded `.BIN` files are processed in a secure environment. Once the 5-page PDF report is generated, the temporary telemetry JSON and the original `.BIN` files are purged from our active processing memory. Reports are securely stored for you to download via your unique Job ID.</p>
+
+<h2>3. Payment Information</h2>
+<p><strong>No credit card data is ever stored on our servers.</strong> All payment processing, billing data, and taxation are handled securely by our Merchant of Record, Dodo Payments. Please refer to Dodo Payments' Privacy Policy for details on how your payment data is secured.</p>
+
+<h2>4. Third-Party Sharing</h2>
+<p>We do not sell, rent, or trade your email address or flight telemetry data to any third parties.</p>
+
+    </main>
+
+    <footer style="width: 100%; text-align: center; padding: 2rem 0; border-top: 1px solid var(--glass-border); margin-top: auto; background: var(--bg-dark);">
+        <div style="font-size: 0.9rem; color: var(--secondary);">
+            <a href="/terms.html" style="color: var(--secondary); text-decoration: none; margin: 0 10px; transition: color 0.3s;">Terms of Service</a> |
+            <a href="/privacy.html" style="color: var(--secondary); text-decoration: none; margin: 0 10px; transition: color 0.3s;">Privacy Policy</a> |
+            <a href="/refund.html" style="color: var(--secondary); text-decoration: none; margin: 0 10px; transition: color 0.3s;">Refund Policy</a>
+        </div>
+        <div style="font-size: 0.8rem; color: #4b5563; margin-top: 10px;">
+            Secure payments processed by Dodo Payments, our Merchant of Record.
+        </div>
+    </footer>
+
+</body>
+</html>

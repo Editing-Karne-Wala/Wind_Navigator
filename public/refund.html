@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refund Policy | Wind_Navigator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0f16;
+            --primary: #00e5ff;
+            --primary-glow: rgba(0, 229, 255, 0.4);
+            --secondary: #6b7280;
+            --text-light: #f3f4f6;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.05);
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            background-image: radial-gradient(circle at 15% 50%, rgba(0, 229, 255, 0.08), transparent 25%), radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.03), transparent 25%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: white;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+        .logo span { color: var(--primary); text-shadow: 0 0 15px var(--primary-glow); }
+        main {
+            flex: 1;
+            padding: 4rem 2rem;
+            max-width: 800px;
+            width: 100%;
+            line-height: 1.6;
+        }
+        h1, h2, h3 { font-family: 'Outfit', sans-serif; color: white; }
+        h1 { font-size: 2.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 2rem; }
+        h2 { font-size: 1.5rem; margin-top: 2rem; color: var(--primary); }
+        a { color: var(--primary); }
+        ul { list-style-type: disc; margin-left: 20px; }
+        li { margin-bottom: 10px; }
+        a:hover { text-shadow: 0 0 10px var(--primary-glow); }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/" class="logo">Wind_<span>Navigator</span></a>
+    </header>
+    <main>
+        <h1>Refund Policy</h1>
+        
+<h2>1. Digital Goods Policy</h2>
+<p>Wind_Navigator provides a computationally intensive digital forensic service. Because significant server resources (physics engine processing) are expended immediately upon successful payment and upload, <strong>completed forensic reports are strictly non-refundable</strong>.</p>
+
+<h2>2. Exceptions and Retries</h2>
+<p>We will issue a full refund or provide a free retry credit under the following conditions:</p>
+<ul>
+    <li>The uploaded `.BIN` file is corrupted and unreadable by our extraction script before physics processing begins.</li>
+    <li>Our backend experiences a catastrophic failure and fails to generate your 5-page PDF report.</li>
+</ul>
+
+<h2>3. Disputed Claims</h2>
+<p>Because Dodo Payments acts as our Merchant of Record, any formal refund requests or billing disputes must be handled in accordance with Dodo Payments' customer service policies. We strive to ensure 100% accuracy, but disagreeing with the physics engine's conclusion (e.g., finding pilot error instead of wind shear) does not qualify for a refund.</p>
+
+    </main>
+
+    <footer style="width: 100%; text-align: center; padding: 2rem 0; border-top: 1px solid var(--glass-border); margin-top: auto; background: var(--bg-dark);">
+        <div style="font-size: 0.9rem; color: var(--secondary);">
+            <a href="/terms.html" style="color: var(--secondary); text-decoration: none; margin: 0 10px; transition: color 0.3s;">Terms of Service</a> |
+            <a href="/privacy.html" style="color: var(--secondary); text-decoration: none; margin: 0 10px; transition: color 0.3s;">Privacy Policy</a> |
+            <a href="/refund.html" style="color: var(--secondary); text-decoration: none; margin: 0 10px; transition: color 0.3s;">Refund Policy</a>
+        </div>
+        <div style="font-size: 0.8rem; color: #4b5563; margin-top: 10px;">
+            Secure payments processed by Dodo Payments, our Merchant of Record.
+        </div>
+    </footer>
+
+</body>
+</html>
